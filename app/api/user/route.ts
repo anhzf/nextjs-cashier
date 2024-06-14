@@ -1,16 +1,6 @@
 import { createUser } from '@/calls/user';
-import { db } from '@/db';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
-
-export const GET = async () => {
-  const users = await db.query.users.findMany({
-    columns: {
-      password: false,
-    },
-  });
-  return NextResponse.json({ data: users });
-};
 
 export const POST = async (req: Request) => {
   const Schema = v.object({

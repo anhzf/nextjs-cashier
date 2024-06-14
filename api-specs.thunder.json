@@ -1,0 +1,101 @@
+{
+    "clientName": "Thunder Client",
+    "collectionName": "NEXTJS CASHIER",
+    "collectionId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+    "dateExported": "2024-06-14T15:11:47.218Z",
+    "version": "1.2",
+    "folders": [
+        {
+            "_id": "e8c5ca0e-12be-47bb-861b-82b68d91dc52",
+            "name": "User",
+            "containerId": "",
+            "created": "2024-06-14T13:06:04.253Z",
+            "sortNum": 10000
+        },
+        {
+            "_id": "8294add6-5c5e-49ea-b593-d3757ca2e2a0",
+            "name": "Auth",
+            "containerId": "",
+            "created": "2024-06-14T14:16:55.344Z",
+            "sortNum": 20000
+        }
+    ],
+    "requests": [
+        {
+            "_id": "7b191ee6-0c4c-4b44-b7dc-9b1b1090f1f6",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "e8c5ca0e-12be-47bb-861b-82b68d91dc52",
+            "name": "Create",
+            "url": "{{BASE_URL}}/api/user",
+            "method": "POST",
+            "sortNum": 10000,
+            "created": "2024-06-14T12:59:32.122Z",
+            "modified": "2024-06-14T13:07:15.157Z",
+            "headers": [
+                {
+                    "name": "Accept",
+                    "value": "application/json, */*"
+                },
+                {
+                    "name": "Content-Type",
+                    "value": "application/json"
+                }
+            ],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"email\": \"work@anhzf.dev\",\n  \"password\": \"password\",\n  \"name\": \"anhzf\"\n}",
+                "form": []
+            },
+            "tests": [
+                {
+                    "type": "res-code",
+                    "custom": "",
+                    "action": "equal",
+                    "value": "200"
+                }
+            ]
+        },
+        {
+            "_id": "23c58eb1-7f20-4fe5-9576-facaeb2a26d8",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "8294add6-5c5e-49ea-b593-d3757ca2e2a0",
+            "name": "Get CSRF",
+            "url": "{{BASE_URL}}/api/auth/csrf",
+            "method": "GET",
+            "sortNum": 15000,
+            "created": "2024-06-14T14:34:02.011Z",
+            "modified": "2024-06-14T14:35:29.664Z",
+            "headers": []
+        },
+        {
+            "_id": "01db7d89-f16b-4f4d-a797-99fd54ba5992",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "8294add6-5c5e-49ea-b593-d3757ca2e2a0",
+            "name": "Sign In",
+            "url": "{{BASE_URL}}/api/auth/callback/credentials",
+            "method": "POST",
+            "sortNum": 30000,
+            "created": "2024-06-14T14:22:39.619Z",
+            "modified": "2024-06-14T14:55:55.284Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"csrfToken\": \"d6214f57be387168449b1cd9c5d4d0526c16d22bd152a46b5e939c33eb1d5433\",\n  \"email\": \"work@anhzf.dev\",\n  \"password\": \"password\"\n}",
+                "form": []
+            }
+        },
+        {
+            "_id": "9febd4cc-313a-4e83-895e-9311fc81d799",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "8294add6-5c5e-49ea-b593-d3757ca2e2a0",
+            "name": "Get Session (User)",
+            "url": "{{BASE_URL}}/api/auth/session",
+            "method": "GET",
+            "sortNum": 40000,
+            "created": "2024-06-14T14:31:23.651Z",
+            "modified": "2024-06-14T14:31:36.455Z",
+            "headers": []
+        }
+    ],
+    "ref": "bALWuXZMI7VpHuYNAKD1b0xMwop1UkmZDI-QGaSpCyWsO2rodghFYEQ2qECQujHAUJfv0bmGq7x0rhajW8p3Jg"
+}

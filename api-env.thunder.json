@@ -1,0 +1,14 @@
+{
+    "clientName": "Thunder Client",
+    "environmentName": "NEXTJS CASHIER",
+    "environmentId": "cce19b4d-7e8a-4e0c-b776-6cb75f7b7e9c",
+    "dateExported": "2024-06-14T15:13:10.719Z",
+    "version": "1.2",
+    "variables": [
+        {
+            "name": "BASE_URL",
+            "value": "http://localhost:3000"
+        }
+    ],
+    "ref": "nTZAD3Kux-da-ELkjHVCTq_b4y_JDcZR8EP2p-LVG_Q0GkMSwsLPhu0IpT90NWNo"
+}

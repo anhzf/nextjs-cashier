@@ -16,7 +16,7 @@ const sortByMap = {
   updatedAt: products.updatedAt,
 } satisfies Record<string, PgColumn>;
 
-interface ListProductsQuery {
+interface ListProductQuery {
   limit?: number;
   start?: number;
   showHidden?: boolean;
@@ -30,11 +30,11 @@ const DEFAULT_LIST_PRODUCTS_QUERY = {
   showHidden: false,
   sortBy: 'name',
   sort: 'asc',
-} satisfies ListProductsQuery;
+} satisfies ListProductQuery;
 
 export const LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY = Object.keys(sortByMap) as (keyof typeof sortByMap)[];
 
-export const listProduct = async (query?: ListProductsQuery): Promise<Product[]> => {
+export const listProduct = async (query?: ListProductQuery): Promise<Product[]> => {
   const { limit, start, showHidden, sortBy, sort } = { ...DEFAULT_LIST_PRODUCTS_QUERY, ...query };
 
   const results = await db.query.products.findMany({
@@ -69,22 +69,18 @@ export const createProduct = async (data: CreateProductData): Promise<number> =>
 
 type UpdateProductData = Partial<Omit<typeof products.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>>;
 
-export const updateProduct = async (id: number, data: UpdateProductData): Promise<number> => {
+export const updateProduct = async (id: number, data: UpdateProductData): Promise<void> => {
   const [result] = await db.update(products).set(data).where(eq(products.id, id)).returning({
     id: products.id,
   });
 
   if (!result) return notFound();
-
-  return result.id;
 };
 
-export const deleteProduct = async (id: number): Promise<number> => {
+export const deleteProduct = async (id: number): Promise<void> => {
   const [result] = await db.delete(products).where(eq(products.id, id)).returning({
     id: products.id,
   });
 
   if (!result) return notFound();
-
-  return result.id;
 };

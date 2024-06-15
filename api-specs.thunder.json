@@ -2,7 +2,7 @@
     "clientName": "Thunder Client",
     "collectionName": "NEXTJS CASHIER",
     "collectionId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
-    "dateExported": "2024-06-15T10:37:30.381Z",
+    "dateExported": "2024-06-15T13:41:01.933Z",
     "version": "1.2",
     "folders": [
         {
@@ -25,6 +25,13 @@
             "containerId": "",
             "created": "2024-06-15T03:55:25.476Z",
             "sortNum": 30000
+        },
+        {
+            "_id": "2c94f4ec-af01-4c6b-b33c-85e7e00a2a9d",
+            "name": "Customer",
+            "containerId": "",
+            "created": "2024-06-15T13:38:12.349Z",
+            "sortNum": 40000
         }
     ],
     "requests": [
@@ -117,36 +124,70 @@
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
             "name": "List",
-            "url": "/api/product?limit&start&showHidden&sortBy&sort",
+            "url": "/api/product?limit=10&start=0&showHidden=false&sortBy=name&sort=asc",
             "method": "GET",
             "sortNum": 50000,
             "created": "2024-06-15T03:55:35.695Z",
-            "modified": "2024-06-15T10:37:11.613Z",
+            "modified": "2024-06-15T13:38:41.613Z",
             "headers": [],
             "params": [
                 {
                     "name": "limit",
-                    "value": "",
+                    "value": "10",
                     "isPath": false
                 },
                 {
                     "name": "start",
-                    "value": "",
+                    "value": "0",
                     "isPath": false
                 },
                 {
                     "name": "showHidden",
-                    "value": "",
+                    "value": "false",
                     "isPath": false
                 },
                 {
                     "name": "sortBy",
-                    "value": "",
+                    "value": "name",
                     "isPath": false
                 },
                 {
                     "name": "sort",
-                    "value": "",
+                    "value": "asc",
+                    "isPath": false
+                }
+            ]
+        },
+        {
+            "_id": "8a9981a3-2ca0-49b9-9892-c1d84c98c509",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "2c94f4ec-af01-4c6b-b33c-85e7e00a2a9d",
+            "name": "List",
+            "url": "/api/customer?limit=10&start=0&sortBy=name&sort=asc",
+            "method": "GET",
+            "sortNum": 50000,
+            "created": "2024-06-15T13:38:12.349Z",
+            "modified": "2024-06-15T13:38:54.618Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "limit",
+                    "value": "10",
+                    "isPath": false
+                },
+                {
+                    "name": "start",
+                    "value": "0",
+                    "isPath": false
+                },
+                {
+                    "name": "sortBy",
+                    "value": "name",
+                    "isPath": false
+                },
+                {
+                    "name": "sort",
+                    "value": "asc",
                     "isPath": false
                 }
             ]
@@ -165,6 +206,32 @@
             "body": {
                 "type": "json",
                 "raw": "{\n  \"name\": \"Margarin\",\n  \"price\": 15000\n}",
+                "form": []
+            },
+            "postReq": {
+                "inlineScripts": [
+                    {
+                        "script": [
+                            "tc.setParam('productId', tc.response.json.data.id);"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "_id": "b934a77c-6397-43fa-9c71-619f025f0458",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "2c94f4ec-af01-4c6b-b33c-85e7e00a2a9d",
+            "name": "Create",
+            "url": "/api/customer",
+            "method": "POST",
+            "sortNum": 60000,
+            "created": "2024-06-15T13:38:12.350Z",
+            "modified": "2024-06-15T13:39:31.243Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"name\": \"Muhammad Sumbul\"\n}",
                 "form": []
             },
             "postReq": {
@@ -197,6 +264,25 @@
             ]
         },
         {
+            "_id": "34d8f528-263a-41da-bcfd-3c877341368b",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "2c94f4ec-af01-4c6b-b33c-85e7e00a2a9d",
+            "name": "Get",
+            "url": "/api/customer/{customerId}",
+            "method": "GET",
+            "sortNum": 70000,
+            "created": "2024-06-15T13:38:12.351Z",
+            "modified": "2024-06-15T13:39:49.583Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "customerId",
+                    "value": "1",
+                    "isPath": true
+                }
+            ]
+        },
+        {
             "_id": "b08c6980-e39a-456c-bf0a-26d2314eb365",
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
@@ -221,6 +307,30 @@
             }
         },
         {
+            "_id": "7ececf29-98fd-4f55-94e1-187af6309c11",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "2c94f4ec-af01-4c6b-b33c-85e7e00a2a9d",
+            "name": "Update",
+            "url": "/api/customer/{customerId}",
+            "method": "PUT",
+            "sortNum": 80000,
+            "created": "2024-06-15T13:38:12.352Z",
+            "modified": "2024-06-15T13:40:30.035Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "customerId",
+                    "value": "1",
+                    "isPath": true
+                }
+            ],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"email\": \"sumbul@kitty.co\"\n}",
+                "form": []
+            }
+        },
+        {
             "_id": "d0f4b933-e2e2-403e-9fea-d3ff702e88d5",
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
@@ -238,6 +348,25 @@
                     "isPath": true
                 }
             ]
+        },
+        {
+            "_id": "82eff267-0cbd-4c49-a148-b256e894678f",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "2c94f4ec-af01-4c6b-b33c-85e7e00a2a9d",
+            "name": "Delete",
+            "url": "/api/customer/{customerId}",
+            "method": "DELETE",
+            "sortNum": 90000,
+            "created": "2024-06-15T13:38:12.353Z",
+            "modified": "2024-06-15T13:40:47.504Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "customerId",
+                    "value": "1",
+                    "isPath": true
+                }
+            ]
         }
     ],
     "settings": {
@@ -246,5 +375,5 @@
         },
         "envId": "cce19b4d-7e8a-4e0c-b776-6cb75f7b7e9c"
     },
-    "ref": "bALWuXZMI7VpHuYNAKD1b0aRFjf5qRSxH0Cp_cC6e2pc5boBNXUI4_vRSMCIDPRhpFmDXkCKsRBzSkrmjaWlrQ"
+    "ref": "bALWuXZMI7VpHuYNAKD1b9LCVf-WkPkRsqw64sKbdxooEagv1SrqWRkNrC3_ZUwzcvOaopwpL6U3LQi9UF6FVQ"
 }

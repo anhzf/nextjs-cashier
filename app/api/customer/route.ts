@@ -1,5 +1,5 @@
 import { auth } from '@/auth';
-import { LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY, createProduct, listProduct } from '@/calls/products';
+import { LIST_CUSTOMER_QUERY_SUPPORTED_SORT_BY, createCustomer, listCustomer } from '@/calls/customers';
 import { defineApi } from '@/utils/api';
 import { notAuthorized } from '@/utils/errors';
 import { BooleanQuerySchema, NumberQuerySchema } from '@/utils/validation';
@@ -11,7 +11,7 @@ export const GET = defineApi(async (req) => {
     limit: v.optional(NumberQuerySchema),
     start: v.optional(NumberQuerySchema),
     showHidden: v.optional(BooleanQuerySchema),
-    sortBy: v.optional(v.picklist(LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY)),
+    sortBy: v.optional(v.picklist(LIST_CUSTOMER_QUERY_SUPPORTED_SORT_BY)),
     sort: v.optional(v.picklist(['asc', 'desc'])),
   }, 'Invalid query');
 
@@ -19,9 +19,9 @@ export const GET = defineApi(async (req) => {
     QuerySchema, Object.fromEntries(new URL(req.url).searchParams.entries()),
   );
 
-  const products = await listProduct(query);
+  const customers = await listCustomer(query);
 
-  return NextResponse.json({ data: products });
+  return NextResponse.json({ data: customers });
 });
 
 export const POST = defineApi(auth(async (req) => {
@@ -29,18 +29,18 @@ export const POST = defineApi(auth(async (req) => {
 
   const BodySchema = v.object({
     name: v.pipe(v.string('Name is required'), v.minLength(3, 'Name should be more than 3 characters'), v.maxLength(32, 'Name should be less than 32 characters')),
-    brand: v.optional(v.pipe(v.string('Brand should be string'), v.minLength(3, 'Brand should be more than 3 characters'), v.maxLength(32, 'Brand should be less than 32 characters'))),
-    type: v.optional(v.pipe(v.string('Type should be string'), v.minLength(3, 'Type should be more than 3 characters'), v.maxLength(32, 'Type should be less than 32 characters'))),
-    size: v.optional(v.pipe(v.string('Size should be string'), v.minLength(3, 'Size should be more than 3 characters'), v.maxLength(32, 'Size should be less than 32 characters'))),
-    price: v.number(),
+    email: v.optional(v.pipe(v.string(), v.email('Email is invalid'))),
+    phone: v.optional(v.pipe(v.string(), v.regex(/^\d{10,13}$/, 'Phone should be 10-13 digits long'))),
+    address: v.optional(v.pipe(v.string(), v.minLength(3, 'Address should be more than 3 characters'), v.maxLength(128, 'Address should be less than 128 characters'))),
+    type: v.optional(v.pipe(v.string(), v.minLength(3, 'Type should be more than 3 characters'), v.maxLength(32, 'Type should be less than 32 characters'))),
   }, 'Invalid body');
 
   const body = v.parse(BodySchema, await req.json());
 
-  const created = await createProduct(body);
+  const created = await createCustomer(body);
 
   return NextResponse.json({
-    message: 'Product created successfully',
+    message: 'Customer created successfully',
     data: { id: created },
   });
 }));

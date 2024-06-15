@@ -2,7 +2,7 @@
     "clientName": "Thunder Client",
     "collectionName": "NEXTJS CASHIER",
     "collectionId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
-    "dateExported": "2024-06-14T15:11:47.218Z",
+    "dateExported": "2024-06-15T04:43:41.311Z",
     "version": "1.2",
     "folders": [
         {
@@ -18,6 +18,13 @@
             "containerId": "",
             "created": "2024-06-14T14:16:55.344Z",
             "sortNum": 20000
+        },
+        {
+            "_id": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
+            "name": "Product",
+            "containerId": "",
+            "created": "2024-06-15T03:55:25.476Z",
+            "sortNum": 30000
         }
     ],
     "requests": [
@@ -26,11 +33,11 @@
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "e8c5ca0e-12be-47bb-861b-82b68d91dc52",
             "name": "Create",
-            "url": "{{BASE_URL}}/api/user",
+            "url": "/api/user",
             "method": "POST",
             "sortNum": 10000,
             "created": "2024-06-14T12:59:32.122Z",
-            "modified": "2024-06-14T13:07:15.157Z",
+            "modified": "2024-06-15T02:47:45.115Z",
             "headers": [
                 {
                     "name": "Accept",
@@ -60,11 +67,11 @@
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "8294add6-5c5e-49ea-b593-d3757ca2e2a0",
             "name": "Get CSRF",
-            "url": "{{BASE_URL}}/api/auth/csrf",
+            "url": "/api/auth/csrf",
             "method": "GET",
             "sortNum": 15000,
             "created": "2024-06-14T14:34:02.011Z",
-            "modified": "2024-06-14T14:35:29.664Z",
+            "modified": "2024-06-15T02:47:50.160Z",
             "headers": []
         },
         {
@@ -72,11 +79,11 @@
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "8294add6-5c5e-49ea-b593-d3757ca2e2a0",
             "name": "Sign In",
-            "url": "{{BASE_URL}}/api/auth/callback/credentials",
+            "url": "/api/auth/callback/credentials",
             "method": "POST",
             "sortNum": 30000,
             "created": "2024-06-14T14:22:39.619Z",
-            "modified": "2024-06-14T14:55:55.284Z",
+            "modified": "2024-06-15T02:47:54.445Z",
             "headers": [],
             "body": {
                 "type": "json",
@@ -89,13 +96,89 @@
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "8294add6-5c5e-49ea-b593-d3757ca2e2a0",
             "name": "Get Session (User)",
-            "url": "{{BASE_URL}}/api/auth/session",
+            "url": "/api/auth/session",
             "method": "GET",
             "sortNum": 40000,
             "created": "2024-06-14T14:31:23.651Z",
-            "modified": "2024-06-14T14:31:36.455Z",
+            "modified": "2024-06-15T02:47:33.245Z",
+            "headers": []
+        },
+        {
+            "_id": "ef3534e3-80a1-4508-b401-3e26b5f8a5c7",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
+            "name": "List",
+            "url": "/api/product",
+            "method": "GET",
+            "sortNum": 50000,
+            "created": "2024-06-15T03:55:35.695Z",
+            "modified": "2024-06-15T03:55:43.124Z",
+            "headers": []
+        },
+        {
+            "_id": "b06bae18-e933-4137-bf7b-1fe5ab944fd7",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
+            "name": "Create",
+            "url": "/api/product",
+            "method": "POST",
+            "sortNum": 60000,
+            "created": "2024-06-15T03:56:07.414Z",
+            "modified": "2024-06-15T04:15:41.810Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"name\": \"Kardus\",\n  \"price\": 10000\n}",
+                "form": []
+            }
+        },
+        {
+            "_id": "15f6373f-d2b0-40ab-a282-51642a359ab8",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
+            "name": "Get",
+            "url": "/api/product/1",
+            "method": "GET",
+            "sortNum": 70000,
+            "created": "2024-06-15T04:21:34.701Z",
+            "modified": "2024-06-15T04:21:50.470Z",
+            "headers": []
+        },
+        {
+            "_id": "b08c6980-e39a-456c-bf0a-26d2314eb365",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
+            "name": "Update",
+            "url": "/api/product/1",
+            "method": "PUT",
+            "sortNum": 80000,
+            "created": "2024-06-15T04:27:01.470Z",
+            "modified": "2024-06-15T04:40:18.996Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"brand\": \"Rose Brand\"\n}",
+                "form": []
+            }
+        },
+        {
+            "_id": "d0f4b933-e2e2-403e-9fea-d3ff702e88d5",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
+            "name": "Delete",
+            "url": "/api/product/1",
+            "method": "DELETE",
+            "sortNum": 90000,
+            "created": "2024-06-15T04:40:30.809Z",
+            "modified": "2024-06-15T04:40:48.550Z",
             "headers": []
         }
     ],
-    "ref": "bALWuXZMI7VpHuYNAKD1b0xMwop1UkmZDI-QGaSpCyWsO2rodghFYEQ2qECQujHAUJfv0bmGq7x0rhajW8p3Jg"
+    "settings": {
+        "options": {
+            "baseUrl": "http://localhost:3000"
+        },
+        "envId": "cce19b4d-7e8a-4e0c-b776-6cb75f7b7e9c"
+    },
+    "ref": "bALWuXZMI7VpHuYNAKD1b6sjVoSRFlcIBo9NVepN3xUb_8vjOxQQDcuZ2y6dimQJRHtXpPyPNfH0G0Uf5PxASQ"
 }

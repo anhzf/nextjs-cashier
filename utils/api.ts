@@ -10,7 +10,7 @@ export const defineApi = <Ctx = HandlerContext>(handler: Handler<Ctx>): Handler<
   async (req, ctx) => {
     try {
       return await handler(req, ctx);
-    } catch (error) {
+    } catch (error: any) {
       if (isClientError(error)) return NextResponse
         .json({ error: error.message }, { status: error.code });
 
@@ -18,7 +18,8 @@ export const defineApi = <Ctx = HandlerContext>(handler: Handler<Ctx>): Handler<
         .json({ error: error.message, details: flatten(error.issues).nested });
 
       // Keep NextJs internal Error
-      if (String(error).startsWith('NEXT_')) throw error;
+      if ('digest' in error
+        || String(error).startsWith('NEXT_')) throw error;
 
       console.error(error);
 

@@ -1,8 +1,9 @@
 import { createUser } from '@/calls/user';
+import { defineApi } from '@/utils/api';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
 
-export const POST = async (req: Request) => {
+export const POST = defineApi(async (req) => {
   const Schema = v.object({
     name: v.pipe(v.string('Name is required'), v.minLength(3, 'Name should be more than 3 characters'), v.maxLength(32, 'Name should be less than 32 characters')),
     email: v.pipe(v.string('Email is required'), v.email()),
@@ -17,4 +18,4 @@ export const POST = async (req: Request) => {
     message: 'User created successfully',
     data: created,
   });
-};
+});

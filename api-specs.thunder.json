@@ -2,7 +2,7 @@
     "clientName": "Thunder Client",
     "collectionName": "NEXTJS CASHIER",
     "collectionId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
-    "dateExported": "2024-06-15T04:43:41.311Z",
+    "dateExported": "2024-06-15T10:26:54.994Z",
     "version": "1.2",
     "folders": [
         {
@@ -71,8 +71,17 @@
             "method": "GET",
             "sortNum": 15000,
             "created": "2024-06-14T14:34:02.011Z",
-            "modified": "2024-06-15T02:47:50.160Z",
-            "headers": []
+            "modified": "2024-06-15T10:13:57.975Z",
+            "headers": [],
+            "postReq": {
+                "inlineScripts": [
+                    {
+                        "script": [
+                            "tc.setVar('CSRF_TOKEN', tc.response.json.csrfToken);"
+                        ]
+                    }
+                ]
+            }
         },
         {
             "_id": "01db7d89-f16b-4f4d-a797-99fd54ba5992",
@@ -83,11 +92,11 @@
             "method": "POST",
             "sortNum": 30000,
             "created": "2024-06-14T14:22:39.619Z",
-            "modified": "2024-06-15T02:47:54.445Z",
+            "modified": "2024-06-15T10:15:24.411Z",
             "headers": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"csrfToken\": \"d6214f57be387168449b1cd9c5d4d0526c16d22bd152a46b5e939c33eb1d5433\",\n  \"email\": \"work@anhzf.dev\",\n  \"password\": \"password\"\n}",
+                "raw": "{\n  \"csrfToken\": \"{{CSRF_TOKEN}}\",\n  \"email\": \"work@anhzf.dev\",\n  \"password\": \"password\"\n}",
                 "form": []
             }
         },
@@ -96,11 +105,11 @@
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "8294add6-5c5e-49ea-b593-d3757ca2e2a0",
             "name": "Get Session (User)",
-            "url": "/api/auth/session",
+            "url": "/api/auth",
             "method": "GET",
             "sortNum": 40000,
             "created": "2024-06-14T14:31:23.651Z",
-            "modified": "2024-06-15T02:47:33.245Z",
+            "modified": "2024-06-15T10:10:27.780Z",
             "headers": []
         },
         {
@@ -124,12 +133,21 @@
             "method": "POST",
             "sortNum": 60000,
             "created": "2024-06-15T03:56:07.414Z",
-            "modified": "2024-06-15T04:15:41.810Z",
+            "modified": "2024-06-15T10:20:14.884Z",
             "headers": [],
             "body": {
                 "type": "json",
                 "raw": "{\n  \"name\": \"Kardus\",\n  \"price\": 10000\n}",
                 "form": []
+            },
+            "postReq": {
+                "inlineScripts": [
+                    {
+                        "script": [
+                            "tc.setParam('productId', tc.response.json.data.id);"
+                        ]
+                    }
+                ]
             }
         },
         {
@@ -137,24 +155,38 @@
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
             "name": "Get",
-            "url": "/api/product/1",
+            "url": "/api/product/{productId}",
             "method": "GET",
             "sortNum": 70000,
             "created": "2024-06-15T04:21:34.701Z",
-            "modified": "2024-06-15T04:21:50.470Z",
-            "headers": []
+            "modified": "2024-06-15T10:23:14.772Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "productId",
+                    "value": "3",
+                    "isPath": true
+                }
+            ]
         },
         {
             "_id": "b08c6980-e39a-456c-bf0a-26d2314eb365",
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
             "name": "Update",
-            "url": "/api/product/1",
+            "url": "/api/product/{productId}",
             "method": "PUT",
             "sortNum": 80000,
             "created": "2024-06-15T04:27:01.470Z",
-            "modified": "2024-06-15T04:40:18.996Z",
+            "modified": "2024-06-15T10:22:51.747Z",
             "headers": [],
+            "params": [
+                {
+                    "name": "productId",
+                    "value": "2",
+                    "isPath": true
+                }
+            ],
             "body": {
                 "type": "json",
                 "raw": "{\n  \"brand\": \"Rose Brand\"\n}",
@@ -166,12 +198,19 @@
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
             "name": "Delete",
-            "url": "/api/product/1",
+            "url": "/api/product/{productId}",
             "method": "DELETE",
             "sortNum": 90000,
             "created": "2024-06-15T04:40:30.809Z",
-            "modified": "2024-06-15T04:40:48.550Z",
-            "headers": []
+            "modified": "2024-06-15T10:22:54.354Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "productId",
+                    "value": "2",
+                    "isPath": true
+                }
+            ]
         }
     ],
     "settings": {
@@ -180,5 +219,5 @@
         },
         "envId": "cce19b4d-7e8a-4e0c-b776-6cb75f7b7e9c"
     },
-    "ref": "bALWuXZMI7VpHuYNAKD1b6sjVoSRFlcIBo9NVepN3xUb_8vjOxQQDcuZ2y6dimQJRHtXpPyPNfH0G0Uf5PxASQ"
+    "ref": "bALWuXZMI7VpHuYNAKD1b0aRFjf5qRSxH0Cp_cC6e2q3AR4gR9Zgu6e8O3R0SNUBcg9KpKbAoauLKo1MSxdWLQ"
 }

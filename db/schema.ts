@@ -27,7 +27,7 @@ export const customers = pgTable('customers', {
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
   name: varchar('name').notNull(),
-  merk: varchar('merk'),
+  brand: varchar('brand'),
   type: varchar('type'),
   size: varchar('size'),
   price: integer('price'),

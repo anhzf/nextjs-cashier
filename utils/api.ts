@@ -15,7 +15,7 @@ export const defineApi = <Ctx = HandlerContext>(handler: Handler<Ctx>): Handler<
         .json({ error: error.message }, { status: error.code });
 
       if (isValiError(error)) return NextResponse
-        .json({ error: error.message, details: flatten(error.issues).nested });
+        .json({ error: error.message, details: flatten(error.issues) });
 
       // Keep NextJs internal Error
       if ('digest' in error

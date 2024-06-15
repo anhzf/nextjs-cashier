@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { products } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { asc, desc, eq } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import { notFound } from 'next/navigation';
 
@@ -21,6 +21,7 @@ interface ListProductsQuery {
   start?: number;
   showHidden?: boolean;
   sortBy?: keyof typeof sortByMap;
+  sort?: 'asc' | 'desc';
 }
 
 const DEFAULT_LIST_PRODUCTS_QUERY = {
@@ -28,16 +29,17 @@ const DEFAULT_LIST_PRODUCTS_QUERY = {
   start: 0,
   showHidden: false,
   sortBy: 'name',
+  sort: 'asc',
 } satisfies ListProductsQuery;
 
 export const LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY = Object.keys(sortByMap) as (keyof typeof sortByMap)[];
 
 export const listProduct = async (query?: ListProductsQuery): Promise<Product[]> => {
-  const { limit, start, showHidden, sortBy } = { ...DEFAULT_LIST_PRODUCTS_QUERY, ...query };
+  const { limit, start, showHidden, sortBy, sort } = { ...DEFAULT_LIST_PRODUCTS_QUERY, ...query };
 
   const results = await db.query.products.findMany({
     where: eq(products.isHidden, showHidden),
-    orderBy: sortByMap[sortBy],
+    orderBy: sort === 'desc' ? desc(sortByMap[sortBy]) : asc(sortByMap[sortBy]),
     limit,
     offset: start,
   });

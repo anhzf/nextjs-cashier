@@ -2,7 +2,7 @@
     "clientName": "Thunder Client",
     "collectionName": "NEXTJS CASHIER",
     "collectionId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
-    "dateExported": "2024-06-15T10:26:54.994Z",
+    "dateExported": "2024-06-15T10:37:30.381Z",
     "version": "1.2",
     "folders": [
         {
@@ -117,12 +117,39 @@
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
             "name": "List",
-            "url": "/api/product",
+            "url": "/api/product?limit&start&showHidden&sortBy&sort",
             "method": "GET",
             "sortNum": 50000,
             "created": "2024-06-15T03:55:35.695Z",
-            "modified": "2024-06-15T03:55:43.124Z",
-            "headers": []
+            "modified": "2024-06-15T10:37:11.613Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "limit",
+                    "value": "",
+                    "isPath": false
+                },
+                {
+                    "name": "start",
+                    "value": "",
+                    "isPath": false
+                },
+                {
+                    "name": "showHidden",
+                    "value": "",
+                    "isPath": false
+                },
+                {
+                    "name": "sortBy",
+                    "value": "",
+                    "isPath": false
+                },
+                {
+                    "name": "sort",
+                    "value": "",
+                    "isPath": false
+                }
+            ]
         },
         {
             "_id": "b06bae18-e933-4137-bf7b-1fe5ab944fd7",
@@ -133,11 +160,11 @@
             "method": "POST",
             "sortNum": 60000,
             "created": "2024-06-15T03:56:07.414Z",
-            "modified": "2024-06-15T10:20:14.884Z",
+            "modified": "2024-06-15T10:30:06.474Z",
             "headers": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"name\": \"Kardus\",\n  \"price\": 10000\n}",
+                "raw": "{\n  \"name\": \"Margarin\",\n  \"price\": 15000\n}",
                 "form": []
             },
             "postReq": {
@@ -219,5 +246,5 @@
         },
         "envId": "cce19b4d-7e8a-4e0c-b776-6cb75f7b7e9c"
     },
-    "ref": "bALWuXZMI7VpHuYNAKD1b0aRFjf5qRSxH0Cp_cC6e2q3AR4gR9Zgu6e8O3R0SNUBcg9KpKbAoauLKo1MSxdWLQ"
+    "ref": "bALWuXZMI7VpHuYNAKD1b0aRFjf5qRSxH0Cp_cC6e2pc5boBNXUI4_vRSMCIDPRhpFmDXkCKsRBzSkrmjaWlrQ"
 }

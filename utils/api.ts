@@ -23,7 +23,7 @@ export const defineApi = <Ctx = HandlerContext>(handler: Handler<Ctx>): Handler<
 
       console.error(error);
 
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+      return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
     }
   }
 );

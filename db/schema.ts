@@ -69,7 +69,24 @@ export const transactionItems = pgTable('transaction_items', {
 }));
 
 export const transactionsRelations = relations(transactions, ({ many, one }) => ({
-  cashier: one(users),
-  customer: one(customers),
+  cashier: one(users, {
+    fields: [transactions.userId],
+    references: [users.id],
+  }),
+  customer: one(customers, {
+    fields: [transactions.customerId],
+    references: [customers.id],
+  }),
   items: many(transactionItems),
+}));
+
+export const transactionItemsRelations = relations(transactionItems, ({ many, one }) => ({
+  transaction: one(transactions, {
+    fields: [transactionItems.transactionId],
+    references: [transactions.id],
+  }),
+  product: one(products, {
+    fields: [transactionItems.productId],
+    references: [products.id],
+  }),
 }));

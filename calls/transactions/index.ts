@@ -44,13 +44,33 @@ export const listTransaction = async (query?: ListTransactionQuery): Promise<Tra
   return results;
 };
 
-export const getTransaction = async (id: number): Promise<Transaction> => {
+export const getTransaction = async (id: number) => {
   const result = await db.query.transactions.findFirst({
     where: eq(transactions.id, id),
+    columns: {
+      userId: false,
+      customerId: false,
+    },
     with: {
-      cashier: true,
-      customer: true,
-      items: true,
+      cashier: {
+        columns: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+      customer: {
+        columns: {
+          id: true,
+          name: true,
+        },
+      },
+      items: {
+        columns: {
+          updatedAt: false,
+          createdAt: false,
+        },
+      },
     },
   });
 

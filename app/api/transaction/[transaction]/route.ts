@@ -8,7 +8,7 @@ import * as v from 'valibot';
 
 export const GET = defineApi(async (req, ctx) => {
   return NextResponse.json({
-    data: await getTransaction(Number(ctx.params.customer)),
+    data: await getTransaction(Number(ctx.params.transaction)),
   });
 });
 

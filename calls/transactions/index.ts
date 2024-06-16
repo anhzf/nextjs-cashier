@@ -3,7 +3,7 @@ import { products, transactionItems, transactions, type transactionStatusEnum } 
 import type { DbTransaction } from '@/types/db';
 import { badRequest } from '@/utils/errors';
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
-import type { PgColumn, PgTransaction } from 'drizzle-orm/pg-core';
+import type { PgColumn } from 'drizzle-orm/pg-core';
 import { notFound } from 'next/navigation';
 
 type Transaction = typeof transactions.$inferSelect;
@@ -63,7 +63,6 @@ const ALLOWED_TRANSACTION_INSERT_FIELDS = ['userId', 'customerId', 'code'] satis
 
 const REQUIRED_TRANSACTION_ITEM_INSERT_FIELDS = ['productId'] satisfies (keyof typeof transactionItems.$inferInsert)[];
 const OPTIONAL_TRANSACTION_ITEM_INSERT_FIELDS = ['price', 'qty'] satisfies (keyof typeof transactionItems.$inferInsert)[];
-// const ALLOWED_TRANSACTION_ITEM_INSERT_FIELDS = [...REQUIRED_TRANSACTION_ITEM_INSERT_FIELDS, ...OPTIONAL_TRANSACTION_ITEM_INSERT_FIELDS];
 
 type InsertTransaction = Pick<typeof transactions.$inferInsert, typeof ALLOWED_TRANSACTION_INSERT_FIELDS[number]>;
 
@@ -107,12 +106,10 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
     },
   });
 
-  const mergedItems = [...existingItems, ...items];
-
-  // Take product prices from the database if not provided
+  // Find product prices from the database if not provided
   const productPrices = await _.query.products.findMany({
-    where: inArray(products.id, mergedItems
-      .filter((item) => item.price !== undefined)
+    where: inArray(products.id, [...existingItems, ...items]
+      .filter((item) => item.price === undefined)
       .map((item) => item.productId)),
     columns: {
       id: true,
@@ -121,7 +118,7 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
   });
 
   const insertedItems = items
-    .filter((item) => mergedItems.findIndex((existing) => (existing.productId === item.productId)) === -1)
+    .filter((item) => existingItems.findIndex((existing) => (existing.productId === item.productId)) === -1)
     .map((item) => ({
       ...item,
       price: item.price ?? productPrices.find((product) => product.id === item.productId)?.price!,
@@ -129,13 +126,13 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
     }));
 
   const updatedItems = items
-    .filter((item) => mergedItems.findIndex((existing) => (existing.productId === item.productId)) !== -1)
+    .filter((item) => existingItems.findIndex((existing) => (existing.productId === item.productId)) !== -1)
     .map((item) => ({
       ...item,
       id: existingItems.find((existing) => existing.id)!.id,
       price: item.price ?? productPrices.find((product) => product.id === item.productId)?.price!,
-      transactionId: id
-    }))
+      transactionId: id,
+    }));
 
   await Promise.all([
     _.insert(transactionItems).values(insertedItems),

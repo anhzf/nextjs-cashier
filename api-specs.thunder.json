@@ -2,7 +2,7 @@
     "clientName": "Thunder Client",
     "collectionName": "NEXTJS CASHIER",
     "collectionId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
-    "dateExported": "2024-06-15T13:41:01.933Z",
+    "dateExported": "2024-06-16T13:58:34.103Z",
     "version": "1.2",
     "folders": [
         {
@@ -32,6 +32,13 @@
             "containerId": "",
             "created": "2024-06-15T13:38:12.349Z",
             "sortNum": 40000
+        },
+        {
+            "_id": "b7903701-7580-47b4-8483-0d42d5a24cbd",
+            "name": "Transaction",
+            "containerId": "",
+            "created": "2024-06-16T04:35:55.436Z",
+            "sortNum": 50000
         }
     ],
     "requests": [
@@ -193,6 +200,57 @@
             ]
         },
         {
+            "_id": "9fa80abe-eb1c-499a-9af5-0aabb0244d98",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "b7903701-7580-47b4-8483-0d42d5a24cbd",
+            "name": "List",
+            "url": "/api/transaction?limit=10&start=0&sortBy=createdAt&sort=asc",
+            "method": "GET",
+            "sortNum": 50000,
+            "created": "2024-06-16T04:35:55.436Z",
+            "modified": "2024-06-16T04:36:44.791Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "limit",
+                    "value": "10",
+                    "isPath": false
+                },
+                {
+                    "name": "start",
+                    "value": "0",
+                    "isPath": false
+                },
+                {
+                    "name": "sortBy",
+                    "value": "createdAt",
+                    "isPath": false
+                },
+                {
+                    "name": "sort",
+                    "value": "asc",
+                    "isPath": false
+                }
+            ]
+        },
+        {
+            "_id": "2403df64-4c9a-4ef8-8877-5bbcfe6a034f",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "8294add6-5c5e-49ea-b593-d3757ca2e2a0",
+            "name": "Sign Out",
+            "url": "/api/auth/signout",
+            "method": "POST",
+            "sortNum": 50000,
+            "created": "2024-06-16T13:25:24.822Z",
+            "modified": "2024-06-16T13:26:06.515Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"csrfToken\": \"{{CSRF_TOKEN}}\"\n}",
+                "form": []
+            }
+        },
+        {
             "_id": "b06bae18-e933-4137-bf7b-1fe5ab944fd7",
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
@@ -245,6 +303,32 @@
             }
         },
         {
+            "_id": "f02bf91d-0181-40b4-94a4-7cc121f35017",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "b7903701-7580-47b4-8483-0d42d5a24cbd",
+            "name": "Create",
+            "url": "/api/transaction",
+            "method": "POST",
+            "sortNum": 60000,
+            "created": "2024-06-16T04:35:55.437Z",
+            "modified": "2024-06-16T04:39:27.624Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"customerId\": 1,\n  \"items\": [\n    {\n      \"productId\": 3\n    }\n  ]\n}",
+                "form": []
+            },
+            "postReq": {
+                "inlineScripts": [
+                    {
+                        "script": [
+                            "tc.setParam('productId', tc.response.json.data.id);"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
             "_id": "15f6373f-d2b0-40ab-a282-51642a359ab8",
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
@@ -278,6 +362,25 @@
                 {
                     "name": "customerId",
                     "value": "1",
+                    "isPath": true
+                }
+            ]
+        },
+        {
+            "_id": "d29aca66-5213-4a06-99d2-9c26653218d0",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "b7903701-7580-47b4-8483-0d42d5a24cbd",
+            "name": "Get",
+            "url": "/api/transaction/{transactionId}",
+            "method": "GET",
+            "sortNum": 70000,
+            "created": "2024-06-16T04:35:55.438Z",
+            "modified": "2024-06-16T13:45:16.358Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "transactionId",
+                    "value": "6",
                     "isPath": true
                 }
             ]
@@ -331,6 +434,30 @@
             }
         },
         {
+            "_id": "b28bb8df-4a43-4e01-8662-62d732826d78",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "b7903701-7580-47b4-8483-0d42d5a24cbd",
+            "name": "Update",
+            "url": "/api/transaction/{transactionId}",
+            "method": "PUT",
+            "sortNum": 80000,
+            "created": "2024-06-16T04:35:55.439Z",
+            "modified": "2024-06-16T13:44:59.131Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "transactionId",
+                    "value": "",
+                    "isPath": true
+                }
+            ],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"email\": \"sumbul@kitty.co\"\n}",
+                "form": []
+            }
+        },
+        {
             "_id": "d0f4b933-e2e2-403e-9fea-d3ff702e88d5",
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
@@ -367,6 +494,25 @@
                     "isPath": true
                 }
             ]
+        },
+        {
+            "_id": "b12c955d-5d35-430f-b212-f75efdc62365",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "b7903701-7580-47b4-8483-0d42d5a24cbd",
+            "name": "Delete",
+            "url": "/api/transaction/{transactionId}",
+            "method": "DELETE",
+            "sortNum": 90000,
+            "created": "2024-06-16T04:35:55.440Z",
+            "modified": "2024-06-16T13:45:07.159Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "transactionId",
+                    "value": "",
+                    "isPath": true
+                }
+            ]
         }
     ],
     "settings": {
@@ -375,5 +521,5 @@
         },
         "envId": "cce19b4d-7e8a-4e0c-b776-6cb75f7b7e9c"
     },
-    "ref": "bALWuXZMI7VpHuYNAKD1b9LCVf-WkPkRsqw64sKbdxooEagv1SrqWRkNrC3_ZUwzcvOaopwpL6U3LQi9UF6FVQ"
+    "ref": "bALWuXZMI7VpHuYNAKD1b9kPHvI8dKeSqgsM9oDSXgU32zdk9ye_3hGpR_1cleaJpxERSZvBl9Xzwb7esuGDXw"
 }

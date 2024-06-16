@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm';
 import { boolean, integer, pgEnum, pgTable, serial, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
@@ -40,19 +41,24 @@ export const transactionStatusEnum = pgEnum('transaction_status', ['pending', 'c
 
 export const transactions = pgTable('transactions', {
   id: serial('id').primaryKey(),
-  customerId: integer('customer_id').references(() => customers.id),
-  userId: integer('user_id').references(() => users.id).notNull(),
+  customerId: integer('customer_id')
+    .references(() => customers.id, { onDelete: 'set null', onUpdate: 'cascade' }),
+  userId: integer('user_id').notNull()
+    .references(() => users.id, { onDelete: 'set null', onUpdate: 'cascade' }),
   // Custom ID provided by the cashier if any
   code: varchar('code'),
   status: transactionStatusEnum('status').notNull().default('pending'),
+  statusChangedAt: timestamp('status_changed_at').notNull().defaultNow(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 export const transactionItems = pgTable('transaction_items', {
   id: serial('id').primaryKey(),
-  transactionId: integer('transaction_id').references(() => transactions.id).notNull(),
-  productId: integer('product_id').references(() => products.id).notNull(),
+  transactionId: integer('transaction_id').notNull()
+    .references(() => transactions.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+  productId: integer('product_id').notNull()
+    .references(() => products.id, { onUpdate: 'cascade' }),
   qty: integer('quantity').notNull().default(1),
   // Should be the price at the time of transaction
   price: integer('price').notNull(),
@@ -60,4 +66,10 @@ export const transactionItems = pgTable('transaction_items', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (transactionItems) => ({
   unqTransactionProduct: uniqueIndex().on(transactionItems.transactionId, transactionItems.productId),
+}));
+
+export const transactionsRelations = relations(transactions, ({ many, one }) => ({
+  cashier: one(users),
+  customer: one(customers),
+  items: many(transactionItems),
 }));

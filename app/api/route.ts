@@ -1,10 +1,4 @@
-import { hash } from '@/calls/security';
+import { defineApi } from '@/utils/api';
 import { NextResponse } from 'next/server';
 
-export const GET = () => {
-  // return NextResponse.json({ message: 'ready!' });
-  return NextResponse.json([
-    hash('password'),
-    hash('password'),
-  ]);
-}
+export const GET = defineApi(() => NextResponse.json({ message: 'ready!' }));

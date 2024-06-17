@@ -2,7 +2,7 @@
     "clientName": "Thunder Client",
     "collectionName": "NEXTJS CASHIER",
     "collectionId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
-    "dateExported": "2024-06-16T13:58:34.103Z",
+    "dateExported": "2024-06-17T16:45:03.414Z",
     "version": "1.2",
     "folders": [
         {
@@ -10,6 +10,13 @@
             "name": "User",
             "containerId": "",
             "created": "2024-06-14T13:06:04.253Z",
+            "sortNum": 10000
+        },
+        {
+            "_id": "cf909298-6966-47fc-bb79-79acdd4619a2",
+            "name": "Item",
+            "containerId": "b7903701-7580-47b4-8483-0d42d5a24cbd",
+            "created": "2024-06-16T14:02:39.128Z",
             "sortNum": 10000
         },
         {
@@ -329,6 +336,39 @@
             }
         },
         {
+            "_id": "7c298ed5-64b6-492f-8f73-436a556dbb14",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "cf909298-6966-47fc-bb79-79acdd4619a2",
+            "name": "Create",
+            "url": "/api/transaction/{transactionId}/item",
+            "method": "POST",
+            "sortNum": 60000,
+            "created": "2024-06-16T14:02:39.129Z",
+            "modified": "2024-06-17T16:44:34.675Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "transactionId",
+                    "value": "6",
+                    "isPath": true
+                }
+            ],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"items\": [\n    {\n      \"productId\": 3,\n      \"qty\": 4\n    }\n  ]\n}",
+                "form": []
+            },
+            "postReq": {
+                "inlineScripts": [
+                    {
+                        "script": [
+                            "tc.setParam('productId', tc.response.json.data.id);"
+                        ]
+                    }
+                ]
+            }
+        },
+        {
             "_id": "15f6373f-d2b0-40ab-a282-51642a359ab8",
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
@@ -458,6 +498,35 @@
             }
         },
         {
+            "_id": "643e26ab-700a-4138-a42a-363745415119",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "cf909298-6966-47fc-bb79-79acdd4619a2",
+            "name": "Update",
+            "url": "/api/transaction/{transactionId}/item/{itemId}",
+            "method": "PUT",
+            "sortNum": 80000,
+            "created": "2024-06-16T14:02:39.131Z",
+            "modified": "2024-06-17T16:41:09.429Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "transactionId",
+                    "value": "",
+                    "isPath": true
+                },
+                {
+                    "name": "itemId",
+                    "value": "",
+                    "isPath": true
+                }
+            ],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"qty\": 1\n}",
+                "form": []
+            }
+        },
+        {
             "_id": "d0f4b933-e2e2-403e-9fea-d3ff702e88d5",
             "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
             "containerId": "a697907b-402c-4ba2-9235-a3c45c2c4a8a",
@@ -513,6 +582,30 @@
                     "isPath": true
                 }
             ]
+        },
+        {
+            "_id": "f09ce987-4e40-4591-ab82-8f4aa1b94734",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "cf909298-6966-47fc-bb79-79acdd4619a2",
+            "name": "Delete",
+            "url": "/api/transaction/{transactionId}/item/{itemId}",
+            "method": "DELETE",
+            "sortNum": 90000,
+            "created": "2024-06-16T14:02:39.132Z",
+            "modified": "2024-06-17T16:41:17.615Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "transactionId",
+                    "value": "",
+                    "isPath": true
+                },
+                {
+                    "name": "itemId",
+                    "value": "",
+                    "isPath": true
+                }
+            ]
         }
     ],
     "settings": {
@@ -521,5 +614,5 @@
         },
         "envId": "cce19b4d-7e8a-4e0c-b776-6cb75f7b7e9c"
     },
-    "ref": "bALWuXZMI7VpHuYNAKD1b9kPHvI8dKeSqgsM9oDSXgU32zdk9ye_3hGpR_1cleaJpxERSZvBl9Xzwb7esuGDXw"
+    "ref": "bALWuXZMI7VpHuYNAKD1bz0U-YanTR4eqjK-rZGw23xDw_gB_x1eeexZ9nJehCttAu68obWf-MSZdEofSv1Y2g"
 }

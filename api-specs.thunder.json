@@ -2,7 +2,7 @@
     "clientName": "Thunder Client",
     "collectionName": "NEXTJS CASHIER",
     "collectionId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
-    "dateExported": "2024-06-17T16:45:03.414Z",
+    "dateExported": "2024-06-19T00:47:37.881Z",
     "version": "1.2",
     "folders": [
         {
@@ -46,6 +46,13 @@
             "containerId": "",
             "created": "2024-06-16T04:35:55.436Z",
             "sortNum": 50000
+        },
+        {
+            "_id": "fbf9bbf4-9a11-4a6a-b822-4056ce958bc1",
+            "name": "Summary",
+            "containerId": "",
+            "created": "2024-06-19T00:43:47.209Z",
+            "sortNum": 60000
         }
     ],
     "requests": [
@@ -606,6 +613,30 @@
                     "isPath": true
                 }
             ]
+        },
+        {
+            "_id": "f90b6dbd-c0e2-4f52-a984-39a9e94df45b",
+            "colId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
+            "containerId": "fbf9bbf4-9a11-4a6a-b822-4056ce958bc1",
+            "name": "Transactions Count",
+            "url": "/api/summary/transactions/count?start=2024-06-01&end=2024-06-19",
+            "method": "GET",
+            "sortNum": 100000,
+            "created": "2024-06-19T00:43:58.466Z",
+            "modified": "2024-06-19T00:47:11.385Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "start",
+                    "value": "2024-06-01",
+                    "isPath": false
+                },
+                {
+                    "name": "end",
+                    "value": "2024-06-19",
+                    "isPath": false
+                }
+            ]
         }
     ],
     "settings": {
@@ -614,5 +645,5 @@
         },
         "envId": "cce19b4d-7e8a-4e0c-b776-6cb75f7b7e9c"
     },
-    "ref": "bALWuXZMI7VpHuYNAKD1bz0U-YanTR4eqjK-rZGw23xDw_gB_x1eeexZ9nJehCttAu68obWf-MSZdEofSv1Y2g"
+    "ref": "bALWuXZMI7VpHuYNAKD1b8GtgWo4VCmLrZQn4E5D3UGA47UbFEgEmAKyY7uBxceyKLp8zZz89oqdCB3f26qc5g"
 }

@@ -67,8 +67,19 @@ export const getTransaction = async (id: number) => {
       },
       items: {
         columns: {
+          transactionId: false,
+          productId: false,
           updatedAt: false,
           createdAt: false,
+        },
+        with: {
+          product: {
+            columns: {
+              id: true,
+              name: true,
+              price: true,
+            },
+          },
         },
       },
     },

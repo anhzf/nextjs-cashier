@@ -3,7 +3,7 @@ import { products, transactionItems, transactions, type transactionStatusEnum } 
 import type { DbTransaction } from '@/types/db';
 import { badRequest } from '@/utils/errors';
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
-import type { PgColumn } from 'drizzle-orm/pg-core';
+import { type PgColumn } from 'drizzle-orm/pg-core';
 import { notFound } from 'next/navigation';
 
 type Transaction = typeof transactions.$inferSelect;
@@ -115,8 +115,8 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
 
   const existingItems = await _.query.transactionItems.findMany({
     where: and(
-      eq(transactions.id, id),
-      inArray(products.id, items.map((item) => item.productId)),
+      eq(transactionItems.transactionId, id),
+      inArray(transactionItems.productId, items.map((item) => item.productId)),
     ),
     columns: {
       id: true,
@@ -155,7 +155,9 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
     }));
 
   await Promise.all([
-    _.insert(transactionItems).values(insertedItems),
+    insertedItems.length
+      ? _.insert(transactionItems).values(insertedItems)
+      : Promise.resolve(),
     ...updatedItems.map(({ transactionId, productId, id, ...item }) => _
       .update(transactionItems).set({
         ...item,

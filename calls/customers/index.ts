@@ -8,10 +8,7 @@ type Customer = typeof customers.$inferSelect;
 
 const sortByMap = {
   name: customers.name,
-  email: customers.email,
   phone: customers.phone,
-  address: customers.address,
-  type: customers.type,
   createdAt: customers.createdAt,
   updatedAt: customers.updatedAt,
 } satisfies Partial<Record<keyof Customer, PgColumn>>;

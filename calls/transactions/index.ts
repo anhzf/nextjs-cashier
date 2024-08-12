@@ -77,7 +77,7 @@ export const getTransaction = async (id: number) => {
             columns: {
               id: true,
               name: true,
-              price: true,
+              variants: true,
             },
           },
         },
@@ -90,10 +90,16 @@ export const getTransaction = async (id: number) => {
   return result;
 };
 
-const ALLOWED_TRANSACTION_INSERT_FIELDS = ['userId', 'customerId', 'code'] satisfies (keyof typeof transactions.$inferInsert)[];
+const ALLOWED_TRANSACTION_INSERT_FIELDS = [
+  'userId', 'customerId', 'code',
+] satisfies (keyof typeof transactions.$inferInsert)[];
 
-const REQUIRED_TRANSACTION_ITEM_INSERT_FIELDS = ['productId'] satisfies (keyof typeof transactionItems.$inferInsert)[];
-const OPTIONAL_TRANSACTION_ITEM_INSERT_FIELDS = ['price', 'qty'] satisfies (keyof typeof transactionItems.$inferInsert)[];
+const REQUIRED_TRANSACTION_ITEM_INSERT_FIELDS = [
+  'productId', 'variantName', 'variantValue',
+] satisfies (keyof typeof transactionItems.$inferInsert)[];
+const OPTIONAL_TRANSACTION_ITEM_INSERT_FIELDS = [
+  'price', 'qty'
+] satisfies (keyof typeof transactionItems.$inferInsert)[];
 
 type InsertTransaction = Pick<typeof transactions.$inferInsert, typeof ALLOWED_TRANSACTION_INSERT_FIELDS[number]>;
 
@@ -117,7 +123,7 @@ const verifyTransactionItemsUpdateAvailability = async (id: number, trx?: DbTran
   if (transaction.status !== 'pending') return badRequest(
     `Adding items to transaction with status '${transaction.status}' is not allowed.`
   );
-}
+};
 
 const _updateItemsInTransaction = async (id: number, items: InsertTransactionItem[], trx?: DbTransaction): Promise<void> => {
   const _ = trx ?? db;
@@ -137,22 +143,33 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
     },
   });
 
-  // Find product prices from the database if not provided
-  const productPrices = await _.query.products.findMany({
+  // Get references of products to get the price
+  const priceReferences = await _.query.products.findMany({
     where: inArray(products.id, [...existingItems, ...items]
       .filter((item) => item.price === undefined)
       .map((item) => item.productId)),
     columns: {
       id: true,
-      price: true,
+      variants: true,
     },
   });
+
+  const findPrice = (productId: number, variantName: string, variantValue: string) => {
+    const price = priceReferences.find((product) => product.id === productId)
+      ?.variants[variantName][variantValue];
+
+    if (price === undefined) {
+      throw new Error(`Price for product ${productId} with variant ${variantName}:${variantValue} not found`);
+    }
+
+    return price;
+  }
 
   const insertedItems = items
     .filter((item) => existingItems.findIndex((existing) => (existing.productId === item.productId)) === -1)
     .map((item) => ({
       ...item,
-      price: item.price ?? productPrices.find((product) => product.id === item.productId)?.price!,
+      price: item.price ?? findPrice(item.productId, item.variantName, item.variantValue),
       transactionId: id
     }));
 
@@ -161,7 +178,7 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
     .map((item) => ({
       ...item,
       id: existingItems.find((existing) => existing.id)!.id,
-      price: item.price ?? productPrices.find((product) => product.id === item.productId)?.price!,
+      price: item.price ?? findPrice(item.productId, item.variantName, item.variantValue),
       transactionId: id,
     }));
 
@@ -220,7 +237,7 @@ export const addItemsToTransaction = async (id: number, items: InsertTransaction
   await _updateItemsInTransaction(id, items);
 };
 
-type UpdateTransactionItem = Omit<Partial<InsertTransactionItem>, 'productId'>;
+type UpdateTransactionItem = Omit<Partial<InsertTransactionItem>, 'productId' | 'variantName' | 'variantValue'>;
 
 export const updateTransactionItem = async (id: number, itemId: number, data: UpdateTransactionItem): Promise<void> => db.transaction(async (trx) => {
   await verifyTransactionItemsUpdateAvailability(id, trx);

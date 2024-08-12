@@ -8,9 +8,6 @@ type Product = typeof products.$inferSelect;
 
 const sortByMap = {
   name: products.name,
-  brand: products.brand,
-  type: products.type,
-  size: products.size,
   price: products.price,
   createdAt: products.createdAt,
   updatedAt: products.updatedAt,

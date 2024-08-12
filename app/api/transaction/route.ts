@@ -33,6 +33,8 @@ export const POST = defineApi(auth(async (req) => {
       productId: v.number('ProductId must be a number'),
       price: v.optional(v.number('Price must be a number')),
       qty: v.optional(v.number('Qty must be a number')),
+      variantName: v.string('VariantName must be a string'),
+      variantValue: v.string('VariantValue must be a string'),
     })),
   }, 'Invalid body');
 

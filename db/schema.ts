@@ -25,10 +25,26 @@ export const customers = pgTable('customers', {
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
   name: varchar('name').notNull(),
-  brand: varchar('brand'),
-  type: varchar('type'),
-  size: varchar('size'),
-  price: integer('price'),
+  /**
+   * Variants are used to store different prices for the same product.
+   * 
+   * For example, a product "T-Shirt" can have variants like "Size" and "Color".
+   * Then the price for each variant can be stored in the following format:
+   * {
+   *  "Size": {
+   *   "S": 10000,
+   *   "M": 12000,
+   *   "L": 14000,
+   *  },
+   *  "Color": {
+   *   "Red": 10000,
+   *   "Green": 10000,
+   *   "Blue": 10000,
+   *  }
+   * }
+   */
+  variants: json('variants').$type<Record<string, Record<string, number>>>()
+    .notNull().default({}),
   isHidden: boolean('is_hidden').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
@@ -56,13 +72,20 @@ export const transactionItems = pgTable('transaction_items', {
     .references(() => transactions.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
   productId: integer('product_id').notNull()
     .references(() => products.id, { onUpdate: 'cascade' }),
+  variantName: varchar('variant_name').notNull(),
+  variantValue: varchar('variant_value').notNull(),
   qty: integer('quantity').notNull().default(1),
   // Should be the price at the time of transaction
   price: integer('price').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (transactionItems) => ({
-  unqTransactionProduct: uniqueIndex().on(transactionItems.transactionId, transactionItems.productId),
+  unqTransactionProduct: uniqueIndex().on(
+    transactionItems.transactionId,
+    transactionItems.productId,
+    transactionItems.variantName,
+    transactionItems.variantValue,
+  ),
 }));
 
 export const transactionsRelations = relations(transactions, ({ many, one }) => ({
@@ -77,7 +100,7 @@ export const transactionsRelations = relations(transactions, ({ many, one }) => 
   items: many(transactionItems),
 }));
 
-export const transactionItemsRelations = relations(transactionItems, ({ many, one }) => ({
+export const transactionItemsRelations = relations(transactionItems, ({ one }) => ({
   transaction: one(transactions, {
     fields: [transactionItems.transactionId],
     references: [transactions.id],

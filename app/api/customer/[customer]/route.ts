@@ -16,10 +16,7 @@ export const PUT = defineApi(auth(async (req, ctx) => {
 
   const BodySchema = v.object({
     name: v.optional(v.pipe(v.string(), v.minLength(3, 'Name should be more than 3 characters'), v.maxLength(32, 'Name should be less than 32 characters'))),
-    email: v.optional(v.pipe(v.string(), v.email('Email is invalid'))),
     phone: v.optional(v.pipe(v.string(), v.regex(/^\d{10,13}$/, 'Phone should be 10-13 digits long'))),
-    address: v.optional(v.pipe(v.string(), v.minLength(3, 'Address should be more than 3 characters'), v.maxLength(128, 'Address should be less than 128 characters'))),
-    type: v.optional(v.pipe(v.string(), v.minLength(3, 'Type should be more than 3 characters'), v.maxLength(32, 'Type should be less than 32 characters'))),
   }, 'Invalid body');
 
   const body = v.parse(BodySchema, await req.json());

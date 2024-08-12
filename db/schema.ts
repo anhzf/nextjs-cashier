@@ -1,5 +1,7 @@
 import { relations } from 'drizzle-orm';
-import { boolean, integer, pgEnum, pgTable, serial, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import { boolean, integer, json, pgEnum, pgTableCreator, serial, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+
+export const pgTable = pgTableCreator((name) => `cashier_${name}`);
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -15,15 +17,10 @@ export const users = pgTable('users', {
 export const customers = pgTable('customers', {
   id: serial('id').primaryKey(),
   name: varchar('name').notNull(),
-  email: varchar('email').unique(),
   phone: varchar('phone'),
-  address: text('address'),
-  type: varchar('type'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (customers) => ({
-  unqEmail: uniqueIndex().on(customers.email),
-}));
+});
 
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),

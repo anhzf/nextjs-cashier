@@ -8,7 +8,6 @@ type Product = typeof products.$inferSelect;
 
 const sortByMap = {
   name: products.name,
-  price: products.price,
   createdAt: products.createdAt,
   updatedAt: products.updatedAt,
 } satisfies Record<string, PgColumn>;

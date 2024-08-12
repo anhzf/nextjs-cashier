@@ -22,28 +22,39 @@ export const customers = pgTable('customers', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+/**
+ * Variants are used to store different prices for the same product.
+ * 
+ * For example, a product "T-Shirt" can have variants like "Size" and "Color".
+ * Then the price for each variant can be stored in the following format:
+ * {
+ *  "Size": {
+ *   "S": 10000,
+ *   "M": 12000,
+ *   "L": 14000,
+ *  },
+ *  "Color": {
+ *   "Red": 10000,
+ *   "Green": 10000,
+ *   "Blue": 10000,
+ *  }
+ * }
+ * 
+ * The specification of product with no variants should be:
+ * {
+ *  "variant": {
+ *   "default": <price>
+ *  }
+ * }
+ */
+export interface ProductVariants {
+  [variantName: string]: Record<string /* variantValue */, number>;
+}
+
 export const products = pgTable('products', {
   id: serial('id').primaryKey(),
   name: varchar('name').notNull(),
-  /**
-   * Variants are used to store different prices for the same product.
-   * 
-   * For example, a product "T-Shirt" can have variants like "Size" and "Color".
-   * Then the price for each variant can be stored in the following format:
-   * {
-   *  "Size": {
-   *   "S": 10000,
-   *   "M": 12000,
-   *   "L": 14000,
-   *  },
-   *  "Color": {
-   *   "Red": 10000,
-   *   "Green": 10000,
-   *   "Blue": 10000,
-   *  }
-   * }
-   */
-  variants: json('variants').$type<Record<string, Record<string, number>>>()
+  variants: json('variants').$type<ProductVariants>()
     .notNull().default({}),
   isHidden: boolean('is_hidden').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),

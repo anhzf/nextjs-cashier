@@ -2,7 +2,7 @@
     "clientName": "Thunder Client",
     "collectionName": "NEXTJS CASHIER",
     "collectionId": "460e4bbf-a7ab-4665-9502-a26da5d1f09d",
-    "dateExported": "2024-06-19T00:47:37.881Z",
+    "dateExported": "2024-08-12T12:42:17.264Z",
     "version": "1.2",
     "folders": [
         {
@@ -325,11 +325,11 @@
             "method": "POST",
             "sortNum": 60000,
             "created": "2024-06-16T04:35:55.437Z",
-            "modified": "2024-06-16T04:39:27.624Z",
+            "modified": "2024-08-12T12:37:22.207Z",
             "headers": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"customerId\": 1,\n  \"items\": [\n    {\n      \"productId\": 3\n    }\n  ]\n}",
+                "raw": "{\n  \"customerId\": 1,\n  \"items\": [\n    {\n      \"productId\": 3,\n      \"variantName\": \"variant\",\n      \"variantValue\": \"default\"\n    }\n  ]\n}",
                 "form": []
             },
             "postReq": {
@@ -351,7 +351,7 @@
             "method": "POST",
             "sortNum": 60000,
             "created": "2024-06-16T14:02:39.129Z",
-            "modified": "2024-06-17T16:44:34.675Z",
+            "modified": "2024-08-12T12:37:55.873Z",
             "headers": [],
             "params": [
                 {
@@ -362,7 +362,7 @@
             ],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"items\": [\n    {\n      \"productId\": 3,\n      \"qty\": 4\n    }\n  ]\n}",
+                "raw": "{\n  \"items\": [\n    {\n      \"productId\": 3,\n      \"qty\": 4,\n      \"variantName\": \"variant\",\n      \"variantValue\": \"default\"\n    }\n  ]\n}",
                 "form": []
             },
             "postReq": {
@@ -465,7 +465,7 @@
             "method": "PUT",
             "sortNum": 80000,
             "created": "2024-06-15T13:38:12.352Z",
-            "modified": "2024-06-15T13:40:30.035Z",
+            "modified": "2024-08-12T12:41:58.776Z",
             "headers": [],
             "params": [
                 {
@@ -476,7 +476,7 @@
             ],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"email\": \"sumbul@kitty.co\"\n}",
+                "raw": "{\n  \"phone\": \"081234567890\"\n}",
                 "form": []
             }
         },
@@ -645,5 +645,5 @@
         },
         "envId": "cce19b4d-7e8a-4e0c-b776-6cb75f7b7e9c"
     },
-    "ref": "bALWuXZMI7VpHuYNAKD1b8GtgWo4VCmLrZQn4E5D3UGA47UbFEgEmAKyY7uBxceyKLp8zZz89oqdCB3f26qc5g"
+    "ref": "bALWuXZMI7VpHuYNAKD1bxMtATXsOA4aISohZGIN-eqL6hxwnvPb_Ud2GNxyGxhnkHUbv2kT0y_AbND7EE88Iw"
 }

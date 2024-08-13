@@ -23,6 +23,10 @@ export const PUT = defineApi(auth(async (req, ctx) => {
   const BodySchema = v.object({
     name: v.optional(v.pipe(v.string(), v.minLength(3, 'Name should be more than 3 characters'), v.maxLength(32, 'Name should be less than 32 characters'))),
     price: v.optional(v.number()),
+    variants: v.optional(v.record(v.string(), v.object({
+      price: v.number(),
+      group: v.optional(v.string()),
+    }))),
   }, 'Invalid body');
 
   const body = v.parse(BodySchema, await req.json());

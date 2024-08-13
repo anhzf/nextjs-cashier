@@ -30,6 +30,10 @@ export const POST = defineApi(auth(async (req) => {
   const BodySchema = v.object({
     name: v.pipe(v.string('Name is required'), v.minLength(3, 'Name should be more than 3 characters'), v.maxLength(32, 'Name should be less than 32 characters')),
     price: v.number(),
+    variants: v.record(v.string(), v.object({
+      price: v.number(),
+      group: v.optional(v.string()),
+    })),
   }, 'Invalid body');
 
   const body = v.parse(BodySchema, await req.json());

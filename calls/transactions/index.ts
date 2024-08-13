@@ -95,7 +95,7 @@ const ALLOWED_TRANSACTION_INSERT_FIELDS = [
 ] satisfies (keyof typeof transactions.$inferInsert)[];
 
 const REQUIRED_TRANSACTION_ITEM_INSERT_FIELDS = [
-  'productId', 'variantName', 'variantValue',
+  'productId', 'variant',
 ] satisfies (keyof typeof transactionItems.$inferInsert)[];
 const OPTIONAL_TRANSACTION_ITEM_INSERT_FIELDS = [
   'price', 'qty'
@@ -154,12 +154,12 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
     },
   });
 
-  const findPrice = (productId: number, variantName: string, variantValue: string) => {
+  const findPrice = (productId: number, variant: string) => {
     const price = priceReferences.find((product) => product.id === productId)
-      ?.variants[variantName][variantValue];
+      ?.variants[variant].price;
 
     if (price === undefined) {
-      throw new Error(`Price for product ${productId} with variant ${variantName}:${variantValue} not found`);
+      throw new Error(`Price for product ${productId} with variant ${variant} not found`);
     }
 
     return price;
@@ -169,7 +169,7 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
     .filter((item) => existingItems.findIndex((existing) => (existing.productId === item.productId)) === -1)
     .map((item) => ({
       ...item,
-      price: item.price ?? findPrice(item.productId, item.variantName, item.variantValue),
+      price: item.price ?? findPrice(item.productId, item.variant),
       transactionId: id
     }));
 
@@ -178,7 +178,7 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
     .map((item) => ({
       ...item,
       id: existingItems.find((existing) => existing.id)!.id,
-      price: item.price ?? findPrice(item.productId, item.variantName, item.variantValue),
+      price: item.price ?? findPrice(item.productId, item.variant),
       transactionId: id,
     }));
 

@@ -1,23 +1,37 @@
 @tailwind base;
 @tailwind components;
+.iconify {
+  @apply size-[1.5em];
+}
 @tailwind utilities;
 
-button, .btn {
-  @apply bg-blue-500 text-white font-bold py-2 px-4 rounded transition-shadow;
+@layer components {
+  button, .btn {
+    @apply inline-flex gap-2 bg-blue-500 text-white font-bold py-2 px-4 items-center rounded transition-shadow;
 
-  &:hover {
-    @apply bg-blue-600;
+    &:hover {
+      @apply bg-blue-600;
+    }
+
+    &:active {
+      @apply bg-blue-700;
+    }
+
+    &:focus {
+      @apply ring ring-blue-300 ring-offset-2;
+    }
+
+    &:disabled {
+      @apply bg-gray-300 text-gray-500 cursor-not-allowed;
+    }
+
+    &:has(.iconify:first-child) {
+      @apply pl-3;
+    }
+
+    &:has(.iconify:last-child) {
+      @apply pr-3;
+    }
   }
 
-  &:active {
-    @apply bg-blue-700;
-  }
-
-  &:focus {
-    @apply ring ring-blue-300 ring-offset-2;
-  }
-
-  &:disabled {
-    @apply bg-gray-300 text-gray-500 cursor-not-allowed;
-  }
 }

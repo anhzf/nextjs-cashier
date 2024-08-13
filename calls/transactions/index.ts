@@ -14,7 +14,7 @@ const sortByMap = {
   updatedAt: transactions.updatedAt,
 } satisfies Partial<Record<keyof Transaction, PgColumn>>;
 
-interface ListTransactionQuery {
+export interface ListTransactionQuery {
   limit?: number;
   start?: number;
   sortBy?: keyof typeof sortByMap;

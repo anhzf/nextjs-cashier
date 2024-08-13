@@ -9,8 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@iconify-json/mdi": "^1.1.68",
+    "@iconify/tailwind": "^1.1.2",
     "@vercel/postgres": "^0.9.0",
     "bcrypt": "^5.1.1",
+    "clsx": "^2.1.1",
     "drizzle-orm": "^0.33.0",
     "next": "^14.2.5",
     "next-auth": "^5.0.0-beta.20",

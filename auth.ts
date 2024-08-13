@@ -24,7 +24,7 @@ export const { handlers, auth, signIn } = NextAuth({
           // logic to verify if user exists
           const user = await getUserByEmailAndPassword(email, password);
 
-          if (!user) throw new Error('User not found.');
+          if (!user) return null;
 
           // return user object with their profile data
           return {
@@ -38,6 +38,7 @@ export const { handlers, auth, signIn } = NextAuth({
             // Return null to indicate that the credentials are invalid
             return null;
           }
+
           throw err;
         }
       },

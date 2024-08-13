@@ -11,8 +11,11 @@ export const getUserByEmailAndPassword = async (email: string, password: string)
     where: eq(users.email, email),
   });
 
-  if (result && compare(password, result.password)) {
-    return result;
+  if (result) {
+    if (compare(password, result.password)) return result;
+    else {
+      throw new Error('Invalid password');
+    }
   }
 };
 

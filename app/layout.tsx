@@ -27,7 +27,9 @@ export default async function RootLayout({
         <AppProviders session={session}>
           <AppDrawer />
 
-          {children}
+          <div className="flex-1">
+            {children}
+          </div>
         </AppProviders>
       </body>
     </html>

@@ -14,7 +14,7 @@ export function AppDrawer() {
   const pathname = usePathname();
 
   return (
-    <nav className="flex flex-col w-64 bg-white text-gray-700 border-r overflow-hidden">
+    <nav className="shrink-0 flex w-64 flex-col bg-white text-gray-700 border-r overflow-hidden">
       {MENU.map(({ href, label }) => (
         <Link
           key={href}

@@ -6,7 +6,6 @@ const lempar = (msg: string) => {
   throw new Error(msg);
 }
 
-
 const action: ProductFormAction = async (payload) => {
   'use server';
 

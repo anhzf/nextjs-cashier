@@ -10,7 +10,26 @@ export default async function ProductPage() {
 
   return (
     <main className="flex gap-4">
-      <pre className="whitespace-pre">{JSON.stringify(products, null, 2)}</pre>
+      <table>
+        <tbody>
+          {products.map((product) => (
+            <tr key={product.id}>
+              <td className="p-2 w-[20ch]">
+                {product.name}
+              </td>
+              <td className="p-2 text-gray-500">
+                {Object.keys(product.variants).length} varian
+              </td>
+              <td className="p-2">
+                <Link href={`/product/${product.id}`} className="btn">
+                  <span className="iconify mdi--pencil" />
+                </Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
       <div className="flex items-center">
         <Link href="/product/new" className="btn">
           <span className="iconify mdi--plus" />

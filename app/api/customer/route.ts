@@ -1,5 +1,6 @@
 import { auth } from '@/auth';
-import { LIST_CUSTOMER_QUERY_SUPPORTED_SORT_BY, createCustomer, listCustomer } from '@/calls/customers';
+import { createCustomer, listCustomer } from '@/calls/customers';
+import { LIST_CUSTOMER_QUERY_SUPPORTED_SORT_BY } from '@/calls/customers/constants';
 import { defineApi } from '@/utils/api';
 import { notAuthorized } from '@/utils/errors';
 import { BooleanQuerySchema, NumberQuerySchema } from '@/utils/validation';
@@ -16,7 +17,7 @@ export const GET = defineApi(async (req) => {
   }, 'Invalid query');
 
   const query = v.parse(
-    QuerySchema, Object.fromEntries(new URL(req.url).searchParams.entries()),
+    QuerySchema, Object.fromEntries(new URL(req.url).searchParams),
   );
 
   const customers = await listCustomer(query);

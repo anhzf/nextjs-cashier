@@ -1,3 +1,4 @@
+import { TRANSACTION_STATUSES } from '@/constants';
 import { relations } from 'drizzle-orm';
 import { boolean, integer, jsonb, pgEnum, pgTableCreator, serial, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 
@@ -40,7 +41,7 @@ export const products = pgTable('products', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
-export const transactionStatusEnum = pgEnum('transaction_status', ['pending', 'completed', 'cancelled', 'suspended']);
+export const transactionStatusEnum = pgEnum('transaction_status', TRANSACTION_STATUSES);
 
 export const transactions = pgTable('transactions', {
   id: serial('id').primaryKey(),

@@ -237,7 +237,7 @@ export const addItemsToTransaction = async (id: number, items: InsertTransaction
   await _updateItemsInTransaction(id, items);
 };
 
-type UpdateTransactionItem = Omit<Partial<InsertTransactionItem>, 'productId' | 'variantName' | 'variantValue'>;
+type UpdateTransactionItem = Omit<Partial<InsertTransactionItem>, 'productId' | 'variant'>;
 
 export const updateTransactionItem = async (id: number, itemId: number, data: UpdateTransactionItem): Promise<void> => db.transaction(async (trx) => {
   await verifyTransactionItemsUpdateAvailability(id, trx);

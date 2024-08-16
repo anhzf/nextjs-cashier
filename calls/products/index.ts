@@ -1,5 +1,5 @@
 import { db } from '@/db';
-import { products } from '@/db/schema';
+import { products, productTags } from '@/db/schema';
 import { asc, desc, eq } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import { notFound } from 'next/navigation';
@@ -38,6 +38,18 @@ export const listProduct = async (query?: ListProductQuery): Promise<Product[]> 
     orderBy: sort === 'desc' ? desc(sortByMap[sortBy]) : asc(sortByMap[sortBy]),
     limit,
     offset: start,
+    with: {
+      tags: {
+        with: {
+          tag: {
+            columns: {
+              id: true,
+              name: true,
+            },
+          },
+        }
+      },
+    },
   });
 
   return results;
@@ -46,6 +58,18 @@ export const listProduct = async (query?: ListProductQuery): Promise<Product[]> 
 export const getProduct = async (id: number): Promise<Product> => {
   const result = await db.query.products.findFirst({
     where: eq(products.id, id),
+    with: {
+      tags: {
+        with: {
+          tag: {
+            columns: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      }
+    },
   });
 
   if (!result) return notFound();
@@ -53,15 +77,23 @@ export const getProduct = async (id: number): Promise<Product> => {
   return result;
 };
 
-type CreateProductData = Omit<typeof products.$inferInsert, 'isHidden' | 'id' | 'createdAt' | 'updatedAt'>;
+type CreateProductData = Omit<typeof products.$inferInsert, 'isHidden' | 'id' | 'createdAt' | 'updatedAt'>
+  & { tags?: number[] };
 
-export const createProduct = async (data: CreateProductData): Promise<number> => {
-  const [result] = await db.insert(products).values(data).returning({
+export const createProduct = async ({ tags, ...data }: CreateProductData): Promise<number> => db.transaction(async (trx) => {
+  const [result] = await trx.insert(products).values(data).returning({
     id: products.id,
   });
 
+  if (tags?.length) {
+    await trx.insert(productTags).values(tags.map((tagId) => ({
+      productId: result.id,
+      tagId,
+    })));
+  }
+
   return result.id;
-};
+});
 
 type UpdateProductData = Partial<Omit<typeof products.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>>;
 

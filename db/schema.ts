@@ -70,6 +70,11 @@ export const transactions = pgTable('transactions', {
   code: varchar('code'),
   status: transactionStatusEnum('status').notNull().default('pending'),
   statusChangedAt: timestamp('status_changed_at').notNull().defaultNow(),
+  // The due date for the transaction for "pending" status only
+  dueDate: timestamp('due_date'),
+  // Support for partial payment
+  // When the transaction is "completed", the paid amount should be equal to the total amount
+  paid: integer('paid').notNull().default(0),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });

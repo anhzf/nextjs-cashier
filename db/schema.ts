@@ -1,6 +1,6 @@
 import { TRANSACTION_STATUSES } from '@/constants';
 import { relations } from 'drizzle-orm';
-import { boolean, integer, jsonb, pgEnum, pgTableCreator, serial, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
+import { boolean, integer, jsonb, pgEnum, pgTableCreator, primaryKey, serial, text, timestamp, uniqueIndex, varchar } from 'drizzle-orm/pg-core';
 
 export const pgTable = pgTableCreator((name) => `cashier_${name}`);
 
@@ -23,13 +23,13 @@ export const customers = pgTable('customers', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
-export const productTags = pgTable('product_tags', {
+export const tags = pgTable('tags', {
   id: serial('id').primaryKey(),
   name: varchar('name').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
-}, (productTags) => ({
-  unqName: uniqueIndex().on(productTags.name),
+}, (tags) => ({
+  unqName: uniqueIndex().on(tags.name),
 }));
 
 export interface VariantAttributes {
@@ -52,8 +52,28 @@ export const products = pgTable('products', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+export const productTags = pgTable('product_tags', {
+  productId: integer('product_id').notNull()
+    .references(() => products.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+  tagId: integer('tag_id').notNull()
+    .references(() => tags.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+}, (productTags) => ({
+  pk: primaryKey({ columns: [productTags.productId, productTags.tagId] }),
+}));
+
 export const productsRelations = relations(products, ({ many }) => ({
   tags: many(productTags),
+}));
+
+export const productTagsRelations = relations(productTags, ({ one }) => ({
+  product: one(products, {
+    fields: [productTags.productId],
+    references: [products.id],
+  }),
+  tag: one(tags, {
+    fields: [productTags.tagId],
+    references: [tags.id],
+  }),
 }));
 
 export const transactionStatusEnum = pgEnum('transaction_status', TRANSACTION_STATUSES);

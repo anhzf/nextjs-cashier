@@ -1,3 +1,5 @@
+// TODO: Protect/filter allowed fields for insert and update
+// TODO: Handle stocking behavior, it determined from the `transaction.isStocking`. If true then the product stock will be increased, otherwise it will be decreased.
 import { db } from '@/db';
 import { products, transactionItems, transactions, type transactionStatusEnum } from '@/db/schema';
 import type { DbTransaction } from '@/types/db';
@@ -207,7 +209,7 @@ export const createTransaction = async (data: CreateTransactionData): Promise<nu
     return transaction.id;
   });
 
-const ALLOWED_TRANSACTION_UPDATE_FIELDS = ['status', 'code'] satisfies (keyof typeof transactions.$inferInsert)[];
+const ALLOWED_TRANSACTION_UPDATE_FIELDS = ['status', 'code', 'paid', 'dueDate'] satisfies (keyof typeof transactions.$inferInsert)[];
 
 type UpdateTransaction = Pick<typeof transactions.$inferInsert, typeof ALLOWED_TRANSACTION_UPDATE_FIELDS[number]>;
 

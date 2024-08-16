@@ -1,3 +1,5 @@
+// TODO: Support updating tags
+// TODO: Protect/filter allowed fields for insert and update
 import { db } from '@/db';
 import { products, productTags } from '@/db/schema';
 import { asc, desc, eq } from 'drizzle-orm';

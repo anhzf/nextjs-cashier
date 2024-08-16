@@ -23,6 +23,15 @@ export const customers = pgTable('customers', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+export const productTags = pgTable('product_tags', {
+  id: serial('id').primaryKey(),
+  name: varchar('name').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (productTags) => ({
+  unqName: uniqueIndex().on(productTags.name),
+}));
+
 export interface VariantAttributes {
   price: number;
   group?: string;
@@ -36,15 +45,23 @@ export const products = pgTable('products', {
   id: serial('id').primaryKey(),
   name: varchar('name').notNull(),
   variants: jsonb('variants').$type<ProductVariants>().notNull(),
+  stock: integer('stock').notNull().default(0),
+  unit: varchar('unit').notNull().default('pcs'),
   isHidden: boolean('is_hidden').notNull().default(false),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
+export const productsRelations = relations(products, ({ many }) => ({
+  tags: many(productTags),
+}));
+
 export const transactionStatusEnum = pgEnum('transaction_status', TRANSACTION_STATUSES);
 
 export const transactions = pgTable('transactions', {
   id: serial('id').primaryKey(),
+  // If the transaction is stocking up the inventory
+  isStocking: boolean('is_stocking').notNull().default(false),
   customerId: integer('customer_id')
     .references(() => customers.id, { onDelete: 'set null', onUpdate: 'cascade' }),
   userId: integer('user_id').notNull()

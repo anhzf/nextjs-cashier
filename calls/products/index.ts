@@ -83,6 +83,8 @@ type CreateProductData = Omit<typeof products.$inferInsert, 'isHidden' | 'id' | 
   & { tags?: number[] };
 
 export const createProduct = async ({ tags, ...data }: CreateProductData): Promise<number> => db.transaction(async (trx) => {
+  console.log({ data, tags });
+
   const [result] = await trx.insert(products).values(data).returning({
     id: products.id,
   });

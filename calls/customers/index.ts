@@ -1,3 +1,4 @@
+'use server';
 // TODO: Protect/filter allowed fields for insert and update
 
 import { DEFAULT_LIST_CUSTOMERS_QUERY, sortByMap, type ListCustomerQuery } from '@/calls/customers/constants';

@@ -21,6 +21,7 @@ const action: ProductFormAction = async (payload) => {
   await createProduct({
     name: payload.name,
     variants,
+    tags: payload.tags?.map((tag) => tag.tagId) ?? [],
   });
 };
 

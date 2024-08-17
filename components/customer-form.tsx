@@ -22,8 +22,6 @@ export function CustomerForm({
   const { register, formState, handleSubmit, setError } = useForm<FieldValues>({ values });
 
   const onSubmit: SubmitHandler<FieldValues> = async (data) => {
-    'use server';
-
     try {
       await createCustomer(data);
     } catch (err) {

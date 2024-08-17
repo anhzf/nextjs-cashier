@@ -1,3 +1,5 @@
+'use server';
+
 import { db } from '@/db';
 import { tags } from '@/db/schema';
 import { pick } from '@/utils/object';

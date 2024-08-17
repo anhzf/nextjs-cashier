@@ -1,10 +1,10 @@
 'use client';
 
-import { redirect, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
-import { FormProvider, useFieldArray, useForm, useFormContext, type SubmitHandler } from 'react-hook-form';
+import { FormProvider, useFieldArray, useForm, type SubmitHandler } from 'react-hook-form';
 
-interface FieldValues {
+export interface ProductFieldValues {
   name: string;
   price?: number;
   variants?: {
@@ -15,7 +15,7 @@ interface FieldValues {
   }[];
 }
 
-export type ProductFormAction = (payload: FieldValues) => Promise<void>;
+export type ProductFormAction = (payload: ProductFieldValues) => Promise<void>;
 
 interface ProductFormProps {
   action: ProductFormAction;
@@ -26,12 +26,11 @@ export function ProductForm({ action }: ProductFormProps) {
 
   const [isSaving, startSaving] = useTransition();
 
-  const formMethods = useForm<FieldValues>();
-  const { control, register, watch, handleSubmit } = formMethods;
-  const { fields, append, remove } = useFieldArray({ control, name: 'variants' });
-  const variants = watch('variants');
+  const formMethods = useForm<ProductFieldValues>();
+  const { control, register, handleSubmit } = formMethods;
+  const { fields } = useFieldArray({ control, name: 'variants' });
 
-  const onSubmit: SubmitHandler<FieldValues> = (values) => {
+  const onSubmit: SubmitHandler<ProductFieldValues> = (values) => {
     startSaving(() => action(values));
     router.push('/product');
   };
@@ -69,32 +68,6 @@ export function ProductForm({ action }: ProductFormProps) {
           </fieldset>
         )}
 
-        {fields.map((field, index) => (
-          <VariantField
-            key={field.id}
-            index={index}
-            onRemoveClick={() => remove(index)}
-          />
-        ))}
-
-        {/* {states.errors.length > 0 && (
-          <ul className="text-red-500">
-            {states.errors.map((error) => (
-              <li key={error}>{error}</li>
-            ))}
-          </ul>
-        )} */}
-
-        <div className="flex">
-          <button
-            type="button"
-            disabled={variants?.at(-1)?.name === ''}
-            onClick={() => append({ name: '', attrs: { price: 0 } })}
-          >
-            Tambah Varian
-          </button>
-        </div>
-
         <div className="flex">
           <button type="submit" disabled={isSaving}>
             {isSaving ? 'Menyimpan...' : 'Simpan'}
@@ -102,54 +75,5 @@ export function ProductForm({ action }: ProductFormProps) {
         </div>
       </form>
     </FormProvider>
-  );
-}
-
-interface VariantFieldProps {
-  index: number;
-  onRemoveClick?: () => void;
-}
-
-function VariantField({ index, onRemoveClick }: VariantFieldProps) {
-  const { register } = useFormContext<FieldValues>();
-
-  return (
-    <div className="flex">
-      <fieldset>
-        <label>
-          Nama Varian
-          <input
-            type="text"
-            id={`product/variants/${index}/name`}
-            required
-            {...register(`variants.${index}.name`, { required: true })}
-            className="px-3 py-2 border rounded"
-          />
-        </label>
-      </fieldset>
-
-      <fieldset>
-        <label>
-          Harga
-          <input
-            type="number"
-            id={`product/variants/${index}/attrs/price`}
-            required
-            {...register(`variants.${index}.attrs.price`, { required: true, valueAsNumber: true, min: 0 })}
-            className="px-3 py-2 border rounded"
-          />
-        </label>
-      </fieldset>
-
-      <div className="flex">
-        <button
-          type="button"
-          aria-label="Hapus"
-          onClick={() => onRemoveClick?.()}
-        >
-          <span className="iconify mdi--delete" />
-        </button>
-      </div>
-    </div>
   );
 }

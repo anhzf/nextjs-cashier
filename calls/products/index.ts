@@ -32,7 +32,7 @@ const DEFAULT_LIST_PRODUCTS_QUERY = {
 
 export const LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY = Object.keys(sortByMap) as (keyof typeof sortByMap)[];
 
-export const listProduct = async (query?: ListProductQuery): Promise<Product[]> => {
+export const listProduct = async (query?: ListProductQuery) => {
   const { limit, start, showHidden, sortBy, sort } = { ...DEFAULT_LIST_PRODUCTS_QUERY, ...query };
 
   const results = await db.query.products.findMany({
@@ -42,6 +42,10 @@ export const listProduct = async (query?: ListProductQuery): Promise<Product[]> 
     offset: start,
     with: {
       tags: {
+        columns: {
+          tagId: false,
+          productId: false,
+        },
         with: {
           tag: {
             columns: {
@@ -49,7 +53,7 @@ export const listProduct = async (query?: ListProductQuery): Promise<Product[]> 
               name: true,
             },
           },
-        }
+        },
       },
     },
   });
@@ -57,7 +61,7 @@ export const listProduct = async (query?: ListProductQuery): Promise<Product[]> 
   return results;
 };
 
-export const getProduct = async (id: number): Promise<Product> => {
+export const getProduct = async (id: number) => {
   const result = await db.query.products.findFirst({
     where: eq(products.id, id),
     with: {
@@ -83,8 +87,6 @@ type CreateProductData = Omit<typeof products.$inferInsert, 'isHidden' | 'id' | 
   & { tags?: number[] };
 
 export const createProduct = async ({ tags, ...data }: CreateProductData): Promise<number> => db.transaction(async (trx) => {
-  console.log({ data, tags });
-
   const [result] = await trx.insert(products).values(data).returning({
     id: products.id,
   });
@@ -99,15 +101,23 @@ export const createProduct = async ({ tags, ...data }: CreateProductData): Promi
   return result.id;
 });
 
-type UpdateProductData = Partial<Omit<typeof products.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>>;
+type UpdateProductData = Partial<Omit<typeof products.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>>
+  & { tags?: number[] };
 
-export const updateProduct = async (id: number, data: UpdateProductData): Promise<void> => {
-  const [result] = await db.update(products).set(data).where(eq(products.id, id)).returning({
+export const updateProduct = async (id: number, { tags, ...data }: UpdateProductData): Promise<void> => db.transaction(async (trx) => {
+  const [result] = await trx.update(products).set(data).where(eq(products.id, id)).returning({
     id: products.id,
   });
 
+  if (tags?.length) {
+    await trx.insert(productTags).values(tags.map((tagId) => ({
+      productId: result.id,
+      tagId,
+    })));
+  }
+
   if (!result) return notFound();
-};
+});
 
 export const deleteProduct = async (id: number): Promise<void> => {
   const [result] = await db.delete(products).where(eq(products.id, id)).returning({

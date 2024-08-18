@@ -1,10 +1,9 @@
 'use client';
 
-import { tagApi } from '@/client/calls';
+import { listTag } from '@/calls/tags';
 import { Async } from '@/components/async';
 import { TagForm } from '@/components/tag-form';
 import { createCache } from '@/utils/cache';
-import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { FormProvider, useFieldArray, useForm, type SubmitHandler } from 'react-hook-form';
 
@@ -22,35 +21,31 @@ export interface ProductFieldValues {
   }[];
 }
 
-const INITIAL_VALUES: ProductFieldValues = {
-  name: '',
-  variants: [],
-  tags: [],
-};
+// const INITIAL_VALUES: ProductFieldValues = {
+//   name: '',
+//   variants: [],
+//   tags: [],
+// };
 
 export type ProductFormAction = (payload: ProductFieldValues) => Promise<void>;
 
 interface ProductFormProps {
-  action: ProductFormAction;
+  values?: ProductFieldValues;
+  action?: ProductFormAction;
 }
 
-const tags = createCache('tags', () => tagApi.list());
+const tags = createCache('tags', () => listTag());
 
-export function ProductForm({ action }: ProductFormProps) {
-  const router = useRouter();
-
+export function ProductForm({ values, action }: ProductFormProps) {
   const [showTagForm, setShowTagForm] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
-  const formMethods = useForm<ProductFieldValues>({ defaultValues: INITIAL_VALUES });
+  const formMethods = useForm<ProductFieldValues>({ values });
   const { control, register, formState, handleSubmit } = formMethods;
   const { fields: tagFields, append, remove } = useFieldArray({ control, name: 'tags' });
 
   const onSubmit: SubmitHandler<ProductFieldValues> = (values) => {
-    console.log(values);
-
-    startSaving(() => action(values));
-    router.push('/product');
+    startSaving(() => Promise.resolve(action?.(values)));
   };
 
   return (

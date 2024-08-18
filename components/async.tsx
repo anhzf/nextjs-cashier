@@ -18,7 +18,7 @@ export function Async<T extends Promise<any>>({ value, init, children }: AsyncPr
       ? value()
       : value
     ).then((v) => setData(v));
-  }, [value, loading]);
+  }, [loading, value]);
 
   return children?.((data ?? init) as Awaited<T>, isLoading);
 };

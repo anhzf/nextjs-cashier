@@ -1,6 +1,7 @@
 import { createProduct } from '@/calls/products';
 import { ProductForm, type ProductFormAction } from '@/components/product-form';
 import { PRODUCT_VARIANT_NO_VARIANTS } from '@/constants';
+import { revalidatePath } from 'next/cache';
 
 const lempar = (msg: string) => {
   throw new Error(msg);
@@ -23,6 +24,8 @@ const action: ProductFormAction = async (payload) => {
     variants,
     tags: payload.tags?.map((tag) => tag.tagId) ?? [],
   });
+
+  revalidatePath('/product');
 };
 
 export default function ProductNewPage() {

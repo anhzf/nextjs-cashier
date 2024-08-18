@@ -1,4 +1,5 @@
 import { listProduct } from '@/calls/products';
+import { getPriceDisplay } from '@/utils/models';
 import Link from 'next/link';
 
 export default async function ProductPage() {
@@ -18,7 +19,7 @@ export default async function ProductPage() {
                 {product.name}
               </td>
               <td className="p-2 text-gray-500">
-                {Object.keys(product.variants).length} varian
+                {getPriceDisplay(product.variants)}
               </td>
               <td className="p-2">
                 <Link href={`/product/${product.id}`} className="btn">

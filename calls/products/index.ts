@@ -1,4 +1,3 @@
-// TODO: Protect/filter allowed fields for insert and update
 import { db } from '@/db';
 import { products, productTags } from '@/db/schema';
 import { pick } from '@/utils/object';
@@ -83,16 +82,23 @@ export const getProduct = async (id: number) => {
   return result;
 };
 
-type CreateProductData = Omit<typeof products.$inferInsert, 'isHidden' | 'id' | 'createdAt' | 'updatedAt'>
-  & { tags?: number[] };
+const ALLOWED_PRODUCT_INSERT_FIELDS = ['name', 'variants', 'unit', 'isHidden'] satisfies (keyof typeof products.$inferInsert)[];
+
+type CreateProductData = Pick<typeof products.$inferInsert, typeof ALLOWED_PRODUCT_INSERT_FIELDS[number]>
+  & {
+    tags?: {
+      id: number;
+    }[]
+  };
 
 export const createProduct = async ({ tags, ...data }: CreateProductData): Promise<number> => db.transaction(async (trx) => {
-  const [result] = await trx.insert(products).values(data).returning({
+  const insertData = pick(data, ...ALLOWED_PRODUCT_INSERT_FIELDS);
+  const [result] = await trx.insert(products).values(insertData).returning({
     id: products.id,
   });
 
   if (tags?.length) {
-    await trx.insert(productTags).values(tags.map((tagId) => ({
+    await trx.insert(productTags).values(tags.map(({ id: tagId }) => ({
       productId: result.id,
       tagId,
     })));
@@ -101,7 +107,7 @@ export const createProduct = async ({ tags, ...data }: CreateProductData): Promi
   return result.id;
 });
 
-const ALLOWED_PRODUCT_UPDATE_FIELDS = ['name', 'variants'] satisfies (keyof typeof products.$inferInsert)[];
+const ALLOWED_PRODUCT_UPDATE_FIELDS = ['name', 'variants', 'isHidden', 'unit'] satisfies (keyof typeof products.$inferInsert)[];
 
 type UpdateProductData = Partial<Pick<typeof products.$inferInsert, typeof ALLOWED_PRODUCT_UPDATE_FIELDS[number]>>
   & {

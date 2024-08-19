@@ -37,6 +37,7 @@ interface ProductFormProps {
 const tags = createCache('tags', () => listTag());
 
 export function ProductForm({ values, action }: ProductFormProps) {
+  const [error, setError] = useState<string>();
   const [showTagForm, setShowTagForm] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
@@ -45,8 +46,14 @@ export function ProductForm({ values, action }: ProductFormProps) {
   const { fields: tagFields, append, remove } = useFieldArray({ control, name: 'tags' });
   const selectedTags = watch('tags');
 
-  const onSubmit: SubmitHandler<ProductFieldValues> = (values) => {
-    startSaving(() => Promise.resolve(action?.(values)));
+  const onSubmit: SubmitHandler<ProductFieldValues> = (payload) => {
+    action && startSaving(async () => {
+      try {
+        await action(payload);
+      } catch (err) {
+        setError(String(err));
+      }
+    });
   };
 
   return (
@@ -56,6 +63,13 @@ export function ProductForm({ values, action }: ProductFormProps) {
           className="flex flex-col"
           onSubmit={handleSubmit(onSubmit)}
         >
+
+          {error && (
+            <div className="text-red-500">
+              {error}
+            </div>
+          )}
+
           <fieldset>
             <label>
               Nama
@@ -113,7 +127,7 @@ export function ProductForm({ values, action }: ProductFormProps) {
                             <option
                               key={tag.id}
                               value={tag.id}
-                              disabled={(selectedTags ?? []).some((selected) => selected.tagId === tag.id)}
+                            // disabled={(selectedTags ?? []).some((selected) => selected.tagId === tag.id)}
                             >
                               {tag.name}
                             </option>

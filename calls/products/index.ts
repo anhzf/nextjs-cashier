@@ -1,8 +1,8 @@
-// TODO: Support updating tags
 // TODO: Protect/filter allowed fields for insert and update
 import { db } from '@/db';
 import { products, productTags } from '@/db/schema';
-import { asc, desc, eq } from 'drizzle-orm';
+import { pick } from '@/utils/object';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import { notFound } from 'next/navigation';
 
@@ -101,21 +101,46 @@ export const createProduct = async ({ tags, ...data }: CreateProductData): Promi
   return result.id;
 });
 
-type UpdateProductData = Partial<Omit<typeof products.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>>
-  & { tags?: number[] };
+const ALLOWED_PRODUCT_UPDATE_FIELDS = ['name', 'variants'] satisfies (keyof typeof products.$inferInsert)[];
+
+type UpdateProductData = Partial<Pick<typeof products.$inferInsert, typeof ALLOWED_PRODUCT_UPDATE_FIELDS[number]>>
+  & {
+    tags?: {
+      id: number;
+      type: 'add' | 'remove';
+    }[]
+  };
 
 export const updateProduct = async (id: number, { tags, ...data }: UpdateProductData): Promise<void> => db.transaction(async (trx) => {
-  const [result] = await trx.update(products).set(data).where(eq(products.id, id)).returning({
+  const productUpdate = {
+    ...pick(data, ...ALLOWED_PRODUCT_UPDATE_FIELDS),
+    updatedAt: new Date(),
+  };
+
+  const updates: Promise<any>[] = [];
+
+  const updateResults = trx.update(products).set(productUpdate).where(eq(products.id, id)).returning({
     id: products.id,
   });
+  updates.push(updateResults);
 
   if (tags?.length) {
-    await trx.insert(productTags).values(tags.map((tagId) => ({
-      productId: result.id,
+    const tagAdds = tags.filter(({ type }) => type === 'add').map(({ id: tagId }) => ({
+      productId: id,
       tagId,
-    })));
+    }));
+    const tagRemoves = tags.filter(({ type }) => type === 'remove').map(({ id }) => id);
+
+    if (tagAdds.length) updates.push(trx.insert(productTags).values(tagAdds).onConflictDoNothing());
+    if (tagRemoves.length) updates.push(trx.delete(productTags).where(and(
+      eq(productTags.productId, id),
+      inArray(productTags.tagId, tagRemoves),
+    )));
   }
 
+  await Promise.all(updates);
+
+  const [result] = await updateResults;
   if (!result) return notFound();
 });
 

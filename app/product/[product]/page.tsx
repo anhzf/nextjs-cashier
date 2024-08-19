@@ -3,6 +3,7 @@ import { ProductForm, type ProductFieldValues, type ProductFormAction } from '@/
 import { PRODUCT_VARIANT_NO_VARIANTS } from '@/constants';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { diff } from 'just-diff';
 
 interface PageProps {
   params: {
@@ -27,11 +28,26 @@ const createAction = (id: number, initial: ProductFieldValues): ProductFormActio
       }
     ]).map((variant) => [variant.name, variant.attrs]));
 
+    const diffs = initial.tags && payload.tags && diff(initial.tags, payload.tags);
+
     await updateProduct(id, {
       name: payload.name,
       variants,
-      /* TODO: Support updating tags */
-      // tags: payload.tags?.map((tag) => tag.tagId) ?? [],
+      tags: diffs?.filter(diff => diff.op !== 'replace')
+        .map((diff) => {
+          if (diff.op === 'add') {
+            return {
+              id: diff.value.tagId,
+              type: 'add',
+            };
+          }
+
+          // expect a remove operation
+          return {
+            type: 'remove',
+            id: initial.tags![diff.path[0] as number].tagId,
+          };
+        }),
     });
 
     revalidatePath('/product');

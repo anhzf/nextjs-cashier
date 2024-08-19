@@ -41,8 +41,9 @@ export function ProductForm({ values, action }: ProductFormProps) {
   const [isSaving, startSaving] = useTransition();
 
   const formMethods = useForm<ProductFieldValues>({ values });
-  const { control, register, formState, handleSubmit } = formMethods;
+  const { control, register, formState, handleSubmit, watch } = formMethods;
   const { fields: tagFields, append, remove } = useFieldArray({ control, name: 'tags' });
+  const selectedTags = watch('tags');
 
   const onSubmit: SubmitHandler<ProductFieldValues> = (values) => {
     startSaving(() => Promise.resolve(action?.(values)));
@@ -101,15 +102,19 @@ export function ProductForm({ values, action }: ProductFormProps) {
                   <Async value={tags.get} init={[]}>
                     {(tags, isLoading) => isLoading
                       ? (
-                        <option value="" disabled selected>Loading...</option>
+                        <option value="" disabled>Loading...</option>
                       ) : (
                         <>
-                          <option value="" disabled selected>
+                          <option value="" disabled>
                             {tags.length ? 'Pilih Tag' : 'Tag tidak tersedia'}
                           </option>
 
                           {tags.map((tag) => (
-                            <option key={tag.id} value={tag.id}>
+                            <option
+                              key={tag.id}
+                              value={tag.id}
+                              disabled={(selectedTags ?? []).some((selected) => selected.tagId === tag.id)}
+                            >
                               {tag.name}
                             </option>
                           ))}

@@ -21,6 +21,16 @@ export default async function ProductPage() {
               <td className="p-2 text-gray-500">
                 {getPriceDisplay(product.variants)}
               </td>
+              <td>
+                {product.tags.map(({ tag }) => (
+                  <span
+                    key={tag.id}
+                    className="inline-flex justify-center items-center px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full"
+                  >
+                    {tag.name}
+                  </span>
+                ))}
+              </td>
               <td className="p-2">
                 <Link href={`/product/${product.id}`} className="btn">
                   <span className="iconify mdi--pencil" />

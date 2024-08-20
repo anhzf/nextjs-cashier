@@ -22,7 +22,7 @@ const action: ProductFormAction = async (payload) => {
   await createProduct({
     name: payload.name,
     variants,
-    tags: payload.tags?.map((tag) => tag.tagId) ?? [],
+    tags: payload.tags?.map(({ tagId: id }) => ({ id })),
   });
 
   revalidatePath('/product');
@@ -32,7 +32,9 @@ export default function ProductNewPage() {
   return (
     <main>
       <h1 className="text-3xl">Tambah Produk</h1>
-      <ProductForm action={action} />
+      <ProductForm
+        action={action}
+      />
     </main>
   );
 }

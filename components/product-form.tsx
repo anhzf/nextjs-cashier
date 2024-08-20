@@ -10,6 +10,7 @@ import { FormProvider, useFieldArray, useForm, type SubmitHandler } from 'react-
 export interface ProductFieldValues {
   name: string;
   price?: number;
+  unit?: string;
   variants?: {
     name: string;
     attrs: {
@@ -21,11 +22,10 @@ export interface ProductFieldValues {
   }[];
 }
 
-// const INITIAL_VALUES: ProductFieldValues = {
-//   name: '',
-//   variants: [],
-//   tags: [],
-// };
+const INITIAL_VALUES: ProductFieldValues = {
+  name: '',
+  unit: 'pcs',
+};
 
 export type ProductFormAction = (payload: ProductFieldValues) => Promise<void>;
 
@@ -41,7 +41,7 @@ export function ProductForm({ values, action }: ProductFormProps) {
   const [showTagForm, setShowTagForm] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
-  const formMethods = useForm<ProductFieldValues>({ values });
+  const formMethods = useForm<ProductFieldValues>({ values, /* defaultValues: INITIAL_VALUES */ });
   const { control, register, formState, handleSubmit, watch } = formMethods;
   const { fields: tagFields, append, remove } = useFieldArray({ control, name: 'tags' });
   const selectedTags = watch('tags');
@@ -95,6 +95,19 @@ export function ProductForm({ values, action }: ProductFormProps) {
             </label>
           </fieldset>
 
+          <fieldset>
+            <label>
+              Satuan
+              <input
+                type="text"
+                id="product/unit"
+                defaultValue={INITIAL_VALUES.unit}
+                {...register('unit', { required: true })}
+                className="px-3 py-2 border rounded"
+              />
+            </label>
+          </fieldset>
+
           <div className="flex">
             <button
               type="button"
@@ -114,26 +127,38 @@ export function ProductForm({ values, action }: ProductFormProps) {
                   className="px-3 py-2 border rounded"
                 >
                   <Async value={tags.get} init={[]}>
-                    {(tags, isLoading) => isLoading
-                      ? (
+                    {(tags, isLoading) => {
+                      if (isLoading) return (
                         <option value="" disabled>Loading...</option>
-                      ) : (
+                      );
+
+                      const unselected = tags.filter((tag) => !(selectedTags ?? [])
+                        .some((selected) => selected.tagId === tag.id));
+                      const self = tags.find((tag) => tag.id === field.tagId);
+
+                      return (
                         <>
                           <option value="" disabled>
-                            {tags.length ? 'Pilih Tag' : 'Tag tidak tersedia'}
+                            {unselected.length ? 'Pilih Tag' : 'Tag tidak tersedia'}
                           </option>
 
-                          {tags.map((tag) => (
+                          {self && (
+                            <option value={self.id}>
+                              {self.name}
+                            </option>
+                          )}
+
+                          {unselected.map((tag) => (
                             <option
                               key={tag.id}
                               value={tag.id}
-                            // disabled={(selectedTags ?? []).some((selected) => selected.tagId === tag.id)}
                             >
                               {tag.name}
                             </option>
                           ))}
                         </>
-                      )}
+                      );
+                    }}
                   </Async>
                 </select>
               </label>

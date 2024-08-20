@@ -67,6 +67,7 @@ export default async function ProductEditPage({ params }: PageProps) {
   const fieldValues: ProductFieldValues = {
     name: product.name,
     price: product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price,
+    unit: product.unit,
     tags: product.tags.map((tag) => ({ tagId: tag.tag.id })),
   };
 

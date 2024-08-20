@@ -35,7 +35,7 @@ export const listProduct = async (query?: ListProductQuery) => {
   const { limit, start, showHidden, sortBy, sort } = { ...DEFAULT_LIST_PRODUCTS_QUERY, ...query };
 
   const results = await db.query.products.findMany({
-    where: eq(products.isHidden, showHidden),
+    where: (showHidden === false) ? eq(products.isHidden, false) : undefined,
     orderBy: sort === 'desc' ? desc(sortByMap[sortBy]) : asc(sortByMap[sortBy]),
     limit,
     offset: start,

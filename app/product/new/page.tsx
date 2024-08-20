@@ -24,6 +24,7 @@ const action: ProductFormAction = async (payload) => {
     variants,
     unit: payload.unit,
     tags: payload.tags?.map(({ tagId: id }) => ({ id })),
+    isHidden: payload.isHidden,
   });
 
   revalidatePath('/product');

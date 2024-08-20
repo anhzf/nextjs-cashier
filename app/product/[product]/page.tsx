@@ -33,6 +33,8 @@ const createAction = (id: number, initial: ProductFieldValues): ProductFormActio
     await updateProduct(id, {
       name: payload.name,
       variants,
+      unit: payload.unit,
+      isHidden: payload.isHidden,
       tags: diffs?.filter(diff => diff.op !== 'replace')
         .map((diff) => {
           if (diff.op === 'add') {
@@ -66,8 +68,9 @@ export default async function ProductEditPage({ params }: PageProps) {
 
   const fieldValues: ProductFieldValues = {
     name: product.name,
-    price: product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price,
     unit: product.unit,
+    isHidden: product.isHidden,
+    price: product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price,
     tags: product.tags.map((tag) => ({ tagId: tag.tag.id })),
   };
 

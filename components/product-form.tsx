@@ -20,6 +20,7 @@ export interface ProductFieldValues {
   tags?: {
     tagId: number;
   }[];
+  isHidden?: boolean;
 }
 
 const INITIAL_VALUES: ProductFieldValues = {
@@ -41,7 +42,7 @@ export function ProductForm({ values, action }: ProductFormProps) {
   const [showTagForm, setShowTagForm] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
-  const formMethods = useForm<ProductFieldValues>({ values, /* defaultValues: INITIAL_VALUES */ });
+  const formMethods = useForm<ProductFieldValues>({ values });
   const { control, register, formState, handleSubmit, watch } = formMethods;
   const { fields: tagFields, append, remove } = useFieldArray({ control, name: 'tags' });
   const selectedTags = watch('tags');
@@ -183,6 +184,25 @@ export function ProductForm({ values, action }: ProductFormProps) {
               )}
             </fieldset>
           ))}
+
+          <fieldset>
+            <label>
+              <input
+                type="checkbox"
+                id="product/isHidden"
+                {...register('isHidden')}
+              />
+              <span className="ml-2">
+                Tandai produk ini sebagai arsip
+              </span>
+            </label>
+
+            <p>
+              <small>
+                Produk yang diarsip tidak akan muncul di daftar produk.
+              </small>
+            </p>
+          </fieldset>
 
           <div className="flex">
             <button type="submit" disabled={!formState.isValid || isSaving}>

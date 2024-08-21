@@ -6,6 +6,7 @@ import { CustomerForm } from '@/components/customer-form';
 import { PRODUCT_VARIANT_NO_VARIANTS, TRANSACTION_STATUSES } from '@/constants';
 import { createCache } from '@/utils/cache';
 import { getPriceDisplay } from '@/utils/models';
+import { cn } from '@/utils/ui';
 import { useMemo, useState, useTransition } from 'react';
 import { FormProvider, useFieldArray, useForm, useFormContext, type SubmitHandler } from 'react-hook-form';
 
@@ -17,6 +18,7 @@ interface FieldValues {
     variant: string;
     qty: number;
   }[];
+  dueDate?: Date;
 }
 
 const INITIAL_VALUES: FieldValues = {
@@ -24,70 +26,88 @@ const INITIAL_VALUES: FieldValues = {
   items: [],
 };
 
-export type TransactionFormAction = (values: FieldValues) => Promise<void>;
+const DEFAULT_EDITABLE = {
+  status: true,
+  customerId: true,
+  items: true,
+  dueDate: true,
+};
+
+export type TransactionFormAction = (values: FieldValues, before?: FieldValues) => Promise<void>;
 
 interface TransactionFormProps {
   values?: FieldValues;
   action?: TransactionFormAction;
+  editable?: Partial<typeof DEFAULT_EDITABLE>;
 }
 
 const priceFormatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
 
 const customers = createCache('customers', () => customerApi.list());
-const _products = createCache('products', () => productApi.list());
-const resolvedProducts = {
-  value: [] as Awaited<ReturnType<typeof _products.get>>,
-  isReady: false,
-};
-const getProducts = async () => {
-  const products = await _products.get();
-  resolvedProducts.value = products;
-  resolvedProducts.isReady = true;
-  return products;
-};
+const products = createCache('products', () => productApi.list({ showHidden: 'true' }));
 
 // TODO: Add allowed editable fields props
 // Found case are in transaction form, where we need to add allowed fields to be edited
 // such as status, customerId, and items
 // Also, creating completed status for transaction is currently not allowed
-export function TransactionForm({ values, action }: TransactionFormProps) {
+export function TransactionForm({ values, action, editable: _editable }: TransactionFormProps) {
+  const editable = useMemo(() => ({ ...DEFAULT_EDITABLE, ..._editable }), [_editable]);
+
+  const [messages, setMessages] = useState<{ msg: string; type?: 'positive' | 'negative' }[]>([]);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
+  // TODO: Put INITIAL_VALUES as defaultValues
+  // Currently, the default values are broke the provided values
   const formMethods = useForm<FieldValues>({ values, defaultValues: INITIAL_VALUES });
   const { register, watch, formState, setValue, handleSubmit } = formMethods;
 
   const selectedCustomer = watch('customerId');
+  const status = watch('status');
   const items = watch('items');
 
-  const subtotal = useMemo(() => items.reduce((acc, item) => {
-    if (resolvedProducts.isReady === false) return acc;
+  const subtotal = useMemo(
+    async () => {
+      const list = await products.get();
+      return items.reduce((acc, item) => {
+        const product = list.find((product) => product.id === Number(item.productId))!;
+        return acc + product?.variants[item.variant]?.price * item.qty;
+      }, 0);
+    },
+    [items],
+  );
 
-    const product = resolvedProducts.value.find((product) => product.id === Number(item.productId))!;
-    return acc + product?.variants[item.variant]?.price * item.qty;
-  }, 0), [items]);
-
-  const onSubmit: SubmitHandler<FieldValues> = (values) => {
+  const onSubmit: SubmitHandler<FieldValues> = (payload) => {
     startSaving(async () => {
-      await action?.(values);
+      await action?.(payload, values);
+      setMessages([{ msg: 'Berhasil menyimpan data transaksi.', type: 'positive' }]);
     });
   };
 
   return (
     <div className="flex gap-4">
       <form onSubmit={handleSubmit(onSubmit)}>
+        {messages.map(({ msg, type }) => (
+          <div
+            key={msg}
+            className={cn({ 'text-green-400': type === 'positive', 'text-red-400': type === 'negative' })}
+          >
+            {msg}
+          </div>
+        ))}
+
         <fieldset>
           <label>
             Customer
             <select
-              {...register('customerId', { required: true })}
+              {...register('customerId', { required: true, disabled: !editable.customerId })}
               className="p-2 border rounded"
             >
-              <Async value={() => customers.get()} init={[]}>
+              <Async value={customers.get} init={[]}>
                 {(data, isLoading) => isLoading
-                  ? <option value="" disabled>Loading...</option>
+                  ? <option value="">Loading...</option>
                   : (<>
-                    <option value="" disabled>Pilih Customer</option>
+                    <option value="">Pilih Customer</option>
                     {data.length ? data.map((customer) => (
                       <option key={customer.id} value={customer.id}>
                         {customer.name}
@@ -99,14 +119,16 @@ export function TransactionForm({ values, action }: TransactionFormProps) {
             </select>
           </label>
 
-          {selectedCustomer ? (
-            <button type="button" onClick={() => setValue('customerId', undefined)}>
-              <span className="iconify mdi--close" />
-            </button>
-          ) : (<button type="button" onClick={() => setShowCustomerForm(true)}>
-            <span className="iconify mdi--plus" />
-            <span>Customer Baru</span>
-          </button>)}
+          {editable.customerId && (
+            selectedCustomer ? (
+              <button type="button" onClick={() => setValue('customerId', undefined)}>
+                <span className="iconify mdi--close" />
+              </button>
+            ) : (<button type="button" onClick={() => setShowCustomerForm(true)}>
+              <span className="iconify mdi--plus" />
+              <span>Customer Baru</span>
+            </button>)
+          )}
         </fieldset>
 
         <fieldset>
@@ -115,7 +137,7 @@ export function TransactionForm({ values, action }: TransactionFormProps) {
             <select
               id="transaction/status"
               required
-              {...register('status', { required: true })}
+              {...register('status', { required: true, disabled: !editable.status })}
               className="px-3 py-2 border rounded"
             >
               {TRANSACTION_STATUSES.map((status) => (
@@ -127,43 +149,72 @@ export function TransactionForm({ values, action }: TransactionFormProps) {
           </label>
         </fieldset>
 
+        {status === 'pending' && (
+          <fieldset>
+            <label>
+              Tanggal Jatuh Tempo
+              <input
+                type="date"
+                min={new Date().toISOString().split('T')[0]}
+                {...register('dueDate', {
+                  required: true,
+                  valueAsDate: true,
+                  disabled: editable.dueDate,
+                  min: new Date().toISOString().split('T')[0],
+                })}
+                className="p-2 border rounded"
+              />
+            </label>
+          </fieldset>
+        )}
+
         <hr />
 
-        <ul>
-          {/* TODO: Resolve product per item independent from getProducts() */}
-          {items.map((item, i) => {
-            if (resolvedProducts.isReady === false) return null;
+        <Async value={products.get} init={[]}>
+          {/* TODO: Resolve product per item independently from products.get() */}
+          {(data) => (
+            <ul>
+              {items.map((item, i) => {
+                const product = data.find((el) => el.id === Number(item.productId))!;
+                const total = product?.variants[item.variant]?.price * item.qty;
 
-            const product = resolvedProducts.value.find((product) => product.id === Number(item.productId))!;
-            const total = product?.variants[item.variant]?.price * item.qty;
-
-            return (
-              <li key={i}>
-                {product?.name} - <span className="text-gray-500">x{item.qty}</span> - {priceFormatter.format(total)}
-              </li>
-            );
-          })}
-        </ul>
+                return (
+                  <li key={i}>
+                    {product?.name} <span className="text-gray-500">x{item.qty}</span> - {priceFormatter.format(total)}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Async>
 
         <hr />
 
         <div className="text-lg">
-          Total: <span className="text-gray-900 font-bold">{priceFormatter.format(subtotal)}</span>
+          Total: <span className="text-gray-900 font-bold">
+            <Async value={subtotal} init={0}>
+              {(data, isLoading) => (<>
+                {isLoading ? 'Loading...' : priceFormatter.format(data)}
+              </>)}
+            </Async>
+          </span>
         </div>
 
         <div className="flex">
           <button
             type="submit"
-            disabled={!formState.isValid || isSaving}
+            disabled={!formState.isValid || isSaving || !Object.values(formState.touchedFields).some(Boolean)}
           >
             <span>{isSaving ? 'Menyimpan...' : 'Simpan'}</span>
           </button>
         </div>
       </form>
 
-      <FormProvider {...formMethods}>
-        <ProductList />
-      </FormProvider>
+      {editable.items && (
+        <FormProvider {...formMethods}>
+          <ProductList />
+        </FormProvider>
+      )}
 
       {showCustomerForm && (
         <div className="flex flex-col gap-4">
@@ -209,7 +260,7 @@ function ProductList() {
       </h2>
       <table>
         <tbody>
-          <Async value={getProducts} init={[]}>
+          <Async value={() => products.get()} init={[]}>
             {(data, isLoading) => isLoading
               ? <tr><td colSpan={3}>Loading...</td></tr>
               : (<>
@@ -222,7 +273,7 @@ function ProductList() {
                   const setQty = (n: number) => {
                     if (itemIdx !== -1) {
                       if (n <= 0) remove(itemIdx);
-                      else setValue(`${namePrefix}.qty`, n);
+                      else setValue(`${namePrefix}.qty`, n, { shouldTouch: true });
                     } else {
                       append({ productId: String(product.id), variant: PRODUCT_VARIANT_NO_VARIANTS.name, qty: n });
                     }

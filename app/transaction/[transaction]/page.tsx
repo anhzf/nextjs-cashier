@@ -1,5 +1,5 @@
-import { addItemsToTransaction, getTransaction, updateTransaction, updateTransactionItem } from '@/calls/transactions';
-import { TransactionForm, type TransactionFormAction, type TransactionFormItemAction } from '@/components/transaction-form';
+import { addItemsToTransaction, getTransaction, updateTransaction } from '@/calls/transactions';
+import { TransactionForm, type TransactionFormAction } from '@/components/transaction-form';
 import { TRANSACTION_STATUSES } from '@/constants';
 import * as v from 'valibot';
 
@@ -9,23 +9,16 @@ interface PageProps {
   };
 }
 
-
-export default async function TransactionViewPage({ params }: PageProps) {
-  const transactionId = Number(params.transaction);
-  const [
-    data
-  ] = await Promise.all([
-    getTransaction(transactionId),
-  ]);
-
-  const action: TransactionFormAction = async ({ status, items }, before) => {
+const createAction = (id: number): TransactionFormAction => (
+  async ({ status, dueDate, items }, before) => {
     'use server';
 
+    // Ensure that we're only updating the fields that have changed
     const updates: Promise<any>[] = [];
 
     if (before?.status !== status) {
       const value = v.parse(v.picklist(TRANSACTION_STATUSES), status);
-      updates.push(updateTransaction(transactionId, { status: value }));
+      updates.push(updateTransaction(id, { status: value, dueDate }));
     }
 
     const hasItemsChange = items.length !== before?.items.length
@@ -36,7 +29,7 @@ export default async function TransactionViewPage({ params }: PageProps) {
       ));
 
     if (hasItemsChange) {
-      updates.push(addItemsToTransaction(transactionId, items.map((item) => ({
+      updates.push(addItemsToTransaction(id, items.map((item) => ({
         productId: Number(item.productId),
         variant: item.variant,
         qty: item.qty,
@@ -44,13 +37,29 @@ export default async function TransactionViewPage({ params }: PageProps) {
     }
 
     await Promise.all(updates);
-  };
+  }
+);
+
+export default async function TransactionViewPage({ params }: PageProps) {
+  const transactionId = Number(params.transaction);
+  const [
+    data
+  ] = await Promise.all([
+    getTransaction(transactionId),
+  ]);
 
   return (
     <main>
       <h1 className="text-3xl">
-        Transaction
+        Transaksi #{data.code ?? transactionId}
       </h1>
+
+      <div>
+        Dibuat pada: {data.createdAt.toLocaleString('id')}
+      </div>
+      <div>
+        Diperbarui pada: {data.updatedAt.toLocaleString('id')}
+      </div>
 
       <TransactionForm
         editable={{
@@ -67,8 +76,7 @@ export default async function TransactionViewPage({ params }: PageProps) {
             qty: item.qty,
           })),
         }}
-        action={action}
-      // itemAction={itemAction}
+        action={createAction(transactionId)}
       />
     </main>
   );

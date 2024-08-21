@@ -21,6 +21,7 @@ const action: TransactionFormAction = async (values) => {
       variant: v.string(),
       qty: v.number(),
     })),
+    dueDate: v.optional(v.date()),
   }, 'Invalid payload');
 
   await createTransaction(v.parse(PayloadSchema, {
@@ -32,6 +33,7 @@ const action: TransactionFormAction = async (values) => {
       variant: item.variant,
       qty: Number(item.qty),
     })),
+    dueDate: values.dueDate,
   } satisfies v.InferInput<typeof PayloadSchema>));
 
   return redirect('/');
@@ -44,7 +46,12 @@ export default async function TransactionViewPage() {
         Buat transaksi baru
       </h1>
 
-      <TransactionForm action={action} />
+      <TransactionForm
+        action={action}
+        editable={{
+          status: false,
+        }}
+      />
     </main>
   );
 }

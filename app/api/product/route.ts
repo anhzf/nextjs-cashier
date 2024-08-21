@@ -13,6 +13,7 @@ export const GET = defineApi(async (req) => {
     showHidden: v.optional(BooleanQuerySchema),
     sortBy: v.optional(v.picklist(LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY)),
     sort: v.optional(v.picklist(['asc', 'desc'])),
+    tag: v.optional(NumberQuerySchema),
   }, 'Invalid query');
 
   const query = v.parse(

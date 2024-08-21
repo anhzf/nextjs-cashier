@@ -1,7 +1,7 @@
 import { db } from '@/db';
 import { products, productTags } from '@/db/schema';
 import { pick } from '@/utils/object';
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, exists, inArray } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 import { notFound } from 'next/navigation';
 
@@ -19,6 +19,7 @@ interface ListProductQuery {
   showHidden?: boolean;
   sortBy?: keyof typeof sortByMap;
   sort?: 'asc' | 'desc';
+  tag?: number;
 }
 
 const DEFAULT_LIST_PRODUCTS_QUERY = {
@@ -32,10 +33,23 @@ const DEFAULT_LIST_PRODUCTS_QUERY = {
 export const LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY = Object.keys(sortByMap) as (keyof typeof sortByMap)[];
 
 export const listProduct = async (query?: ListProductQuery) => {
-  const { limit, start, showHidden, sortBy, sort } = { ...DEFAULT_LIST_PRODUCTS_QUERY, ...query };
+  const mergedQuery = { ...DEFAULT_LIST_PRODUCTS_QUERY, ...query };
+  const { limit, start, showHidden, sortBy, sort, tag } = mergedQuery;
 
   const results = await db.query.products.findMany({
-    where: (showHidden === false) ? eq(products.isHidden, false) : undefined,
+    where: (table) => and(
+      (showHidden === false) ? eq(products.isHidden, false) : undefined,
+      (typeof tag === 'number') ? exists(
+        db.select()
+          .from(productTags)
+          .where(
+            and(
+              eq(productTags.productId, table.id),
+              eq(productTags.tagId, tag),
+            ),
+          ),
+      ) : undefined,
+    ),
     orderBy: sort === 'desc' ? desc(sortByMap[sortBy]) : asc(sortByMap[sortBy]),
     limit,
     offset: start,

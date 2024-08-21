@@ -1,7 +1,7 @@
 'use client';
 
 import { useLoading } from '@/hooks/use-loading';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 
 interface AsyncProps<T extends PromiseLike<any>> {
   value: T | (() => T);
@@ -9,7 +9,7 @@ interface AsyncProps<T extends PromiseLike<any>> {
   children?: (data: Awaited<T>, isLoading: boolean) => JSX.Element;
 }
 
-export function Async<T extends Promise<any>>({ value, init, children }: AsyncProps<T>) {
+function _Async<T extends Promise<any>>({ value, init, children }: AsyncProps<T>) {
   const [isLoading, loading] = useLoading();
   const [data, setData] = useState(init);
 
@@ -21,4 +21,6 @@ export function Async<T extends Promise<any>>({ value, init, children }: AsyncPr
   }, [loading, value]);
 
   return children?.((data ?? init) as Awaited<T>, isLoading);
-};
+}
+
+export const Async = memo(_Async) as typeof _Async;

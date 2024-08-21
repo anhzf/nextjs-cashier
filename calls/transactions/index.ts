@@ -1,9 +1,9 @@
-// TODO: Protect/filter allowed fields for insert and update
 // TODO: Handle stocking behavior, it determined from the `transaction.isStocking`. If true then the product stock will be increased, otherwise it will be decreased.
 import { db } from '@/db';
 import { products, transactionItems, transactions, type transactionStatusEnum } from '@/db/schema';
 import type { DbTransaction } from '@/types/db';
 import { badRequest } from '@/utils/errors';
+import { pick } from '@/utils/object';
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { type PgColumn } from 'drizzle-orm/pg-core';
 import { notFound } from 'next/navigation';
@@ -33,7 +33,7 @@ const DEFAULT_LIST_TRANSACTIONS_QUERY = {
 
 export const LIST_TRANSACTION_QUERY_SUPPORTED_SORT_BY = Object.keys(sortByMap) as (keyof typeof sortByMap)[];
 
-export const listTransaction = async (query?: ListTransactionQuery): Promise<Transaction[]> => {
+export const listTransaction = async (query?: ListTransactionQuery) => {
   const { limit, start, sortBy, sort, status } = { ...DEFAULT_LIST_TRANSACTIONS_QUERY, ...query };
 
   const results = await db.query.transactions.findMany({
@@ -99,6 +99,7 @@ const ALLOWED_TRANSACTION_INSERT_FIELDS = [
 const REQUIRED_TRANSACTION_ITEM_INSERT_FIELDS = [
   'productId', 'variant',
 ] satisfies (keyof typeof transactionItems.$inferInsert)[];
+
 const OPTIONAL_TRANSACTION_ITEM_INSERT_FIELDS = [
   'price', 'qty'
 ] satisfies (keyof typeof transactionItems.$inferInsert)[];
@@ -132,10 +133,12 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
 
   await verifyTransactionItemsUpdateAvailability(id, trx);
 
+  const validatedItems = items.map((item) => pick(item, ...REQUIRED_TRANSACTION_ITEM_INSERT_FIELDS, ...OPTIONAL_TRANSACTION_ITEM_INSERT_FIELDS));
+
   const existingItems = await _.query.transactionItems.findMany({
     where: and(
       eq(transactionItems.transactionId, id),
-      inArray(transactionItems.productId, items.map((item) => item.productId)),
+      inArray(transactionItems.productId, validatedItems.map((item) => item.productId)),
     ),
     columns: {
       id: true,
@@ -147,7 +150,7 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
 
   // Get references of products to get the price
   const priceReferences = await _.query.products.findMany({
-    where: inArray(products.id, [...existingItems, ...items]
+    where: inArray(products.id, [...existingItems, ...validatedItems]
       .filter((item) => item.price === undefined)
       .map((item) => item.productId)),
     columns: {
@@ -167,7 +170,7 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
     return price;
   }
 
-  const insertedItems = items
+  const insertedItems = validatedItems
     .filter((item) => existingItems.findIndex((existing) => (existing.productId === item.productId)) === -1)
     .map((item) => ({
       ...item,
@@ -175,9 +178,9 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
       transactionId: id
     }));
 
-  const updatedItems = items
+  const updatedItems = validatedItems
     .filter((item) => existingItems.findIndex((existing) => (existing.productId === item.productId)) !== -1)
-    .map((item) => ({
+    .map((item) => pick({
       ...item,
       id: existingItems.find((existing) => existing.id)!.id,
       price: item.price ?? findPrice(item.productId, item.variant),
@@ -198,13 +201,15 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
   ]);
 };
 
-export const createTransaction = async (data: CreateTransactionData): Promise<number> => db
+export const createTransaction = async ({ items, ...data }: CreateTransactionData): Promise<number> => db
   .transaction(async (trx) => {
-    const [transaction] = await trx.insert(transactions).values(data).returning({
+    const [transaction] = await trx.insert(transactions).values(
+      pick(data, ...ALLOWED_TRANSACTION_INSERT_FIELDS),
+    ).returning({
       id: transactions.id,
     });
 
-    await _updateItemsInTransaction(transaction.id, data.items, trx);
+    await _updateItemsInTransaction(transaction.id, items, trx);
 
     return transaction.id;
   });
@@ -216,11 +221,13 @@ type UpdateTransaction = Pick<typeof transactions.$inferInsert, typeof ALLOWED_T
 type UpdateTransactionData = UpdateTransaction;
 
 export const updateTransaction = async (id: number, data: UpdateTransactionData): Promise<void> => {
-  const [result] = await db.update(transactions).set({
-    ...data,
-    statusChangedAt: data.status && new Date(),
-    updatedAt: new Date(),
-  }).where(eq(transactions.id, id)).returning({
+  const [result] = await db.update(transactions).set(
+    pick({
+      ...data,
+      statusChangedAt: data.status && new Date(),
+      updatedAt: new Date(),
+    }, ...ALLOWED_TRANSACTION_UPDATE_FIELDS),
+  ).where(eq(transactions.id, id)).returning({
     id: transactions.id,
   });
 

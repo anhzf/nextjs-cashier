@@ -3,6 +3,10 @@ import type { PgColumn } from 'drizzle-orm/pg-core';
 
 type Customer = typeof customers.$inferSelect;
 
+export const ALLOWED_CUSTOMER_UPDATE_FIELDS = ['name', 'phone'] satisfies (keyof typeof customers.$inferInsert)[];
+
+export const ALLOWED_CUSTOMER_INSERT_FIELDS = ['name', 'phone'] satisfies (keyof typeof customers.$inferInsert)[];
+
 export const sortByMap = {
   name: customers.name,
   phone: customers.phone,

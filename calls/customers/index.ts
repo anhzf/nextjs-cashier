@@ -1,9 +1,10 @@
 'use server';
 // TODO: Protect/filter allowed fields for insert and update
 
-import { DEFAULT_LIST_CUSTOMERS_QUERY, sortByMap, type ListCustomerQuery } from '@/calls/customers/constants';
+import { ALLOWED_CUSTOMER_INSERT_FIELDS, ALLOWED_CUSTOMER_UPDATE_FIELDS, DEFAULT_LIST_CUSTOMERS_QUERY, sortByMap, type ListCustomerQuery } from '@/calls/customers/constants';
 import { db } from '@/db';
 import { customers } from '@/db/schema';
+import { pick } from '@/utils/object';
 import { asc, desc, eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 
@@ -31,20 +32,25 @@ export async function getCustomer(id: number): Promise<Customer> {
   return result;
 }
 
-type CreateCustomerData = Omit<typeof customers.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>;
+type CreateCustomerData = Pick<typeof customers.$inferInsert, typeof ALLOWED_CUSTOMER_INSERT_FIELDS[number]>;
 
 export async function createCustomer(data: CreateCustomerData): Promise<number> {
-  const [result] = await db.insert(customers).values(data).returning({
+  const [result] = await db.insert(customers).values(
+    pick(data, ...ALLOWED_CUSTOMER_INSERT_FIELDS),
+  ).returning({
     id: customers.id,
   });
 
   return result.id;
 }
 
-type UpdateCustomerData = Partial<Omit<typeof customers.$inferInsert, 'id' | 'createdAt' | 'updatedAt'>>;
+type UpdateCustomerData = Partial<Pick<typeof customers.$inferInsert, typeof ALLOWED_CUSTOMER_UPDATE_FIELDS[number]>>;
 
 export async function updateCustomer(id: number, data: UpdateCustomerData): Promise<void> {
-  const [result] = await db.update(customers).set(data).where(eq(customers.id, id)).returning({
+  const [result] = await db.update(customers).set({
+    ...pick(data, ...ALLOWED_CUSTOMER_UPDATE_FIELDS),
+    updatedAt: new Date(),
+  }).where(eq(customers.id, id)).returning({
     id: customers.id,
   });
 

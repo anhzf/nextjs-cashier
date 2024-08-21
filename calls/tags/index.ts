@@ -29,7 +29,7 @@ type CreateTagData = Pick<typeof tags.$inferInsert, typeof ALLOWED_TAG_INSERT_FI
 
 export const createTag = async (data: CreateTagData): Promise<number> => {
   const [tag] = await db.insert(tags).values(
-    pick(data, ALLOWED_TAG_INSERT_FIELDS),
+    pick(data, ...ALLOWED_TAG_INSERT_FIELDS),
   ).returning({
     id: tags.id,
   });
@@ -42,9 +42,10 @@ const ALLOWED_TAG_UPDATE_FIELDS = ALLOWED_TAG_INSERT_FIELDS;
 type UpdateTagData = CreateTagData;
 
 export const updateTag = async (id: number, data: UpdateTagData): Promise<void> => {
-  const [result] = await db.update(tags).set(
-    pick(data, ALLOWED_TAG_UPDATE_FIELDS),
-  ).where(eq(tags.id, id))
+  const [result] = await db.update(tags).set({
+    ...pick(data, ...ALLOWED_TAG_UPDATE_FIELDS),
+    updatedAt: new Date(),
+  }).where(eq(tags.id, id))
     .returning({
       id: tags.id,
     });

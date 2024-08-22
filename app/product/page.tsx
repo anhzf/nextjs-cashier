@@ -1,4 +1,5 @@
-import { LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY, listProduct } from '@/calls/products';
+import { listProduct } from '@/calls/products';
+import { LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY } from '@/calls/products/constants';
 import { listTag } from '@/calls/tags';
 import { getPriceDisplay } from '@/utils/models';
 import { cn } from '@/utils/ui';

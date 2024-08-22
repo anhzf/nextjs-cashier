@@ -7,11 +7,11 @@ import { PRODUCT_VARIANT_NO_VARIANTS, TRANSACTION_STATUSES } from '@/constants';
 import { createCache } from '@/utils/cache';
 import { getPriceDisplay } from '@/utils/models';
 import { cn } from '@/utils/ui';
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import { FormProvider, useFieldArray, useForm, useFormContext, type SubmitHandler } from 'react-hook-form';
 
 interface FieldValues {
-  customerId?: string;
+  customerId?: number;
   status: string;
   items: {
     productId: string;
@@ -50,16 +50,14 @@ const products = createCache('products', () => productApi.list({ showHidden: 'tr
 // Found case are in transaction form, where we need to add allowed fields to be edited
 // such as status, customerId, and items
 // Also, creating completed status for transaction is currently not allowed
-export function TransactionForm({ values, action, editable: _editable }: TransactionFormProps) {
+export function TransactionForm({ values = INITIAL_VALUES, action, editable: _editable }: TransactionFormProps) {
   const editable = useMemo(() => ({ ...DEFAULT_EDITABLE, ..._editable }), [_editable]);
 
   const [messages, setMessages] = useState<{ msg: string; type?: 'positive' | 'negative' }[]>([]);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
-  // TODO: Put INITIAL_VALUES as defaultValues
-  // Currently, the default values are broke the provided values
-  const formMethods = useForm<FieldValues>({ values, defaultValues: INITIAL_VALUES });
+  const formMethods = useForm<FieldValues>({ defaultValues: values });
   const { register, watch, formState, setValue, handleSubmit } = formMethods;
 
   const selectedCustomer = watch('customerId');
@@ -86,6 +84,10 @@ export function TransactionForm({ values, action, editable: _editable }: Transac
 
   return (
     <div className="flex gap-4">
+      {/* <pre className="whitespace-pre">
+        {JSON.stringify(watch(), null, 2)}
+      </pre> */}
+
       <form onSubmit={handleSubmit(onSubmit)}>
         {messages.map(({ msg, type }) => (
           <div
@@ -96,40 +98,56 @@ export function TransactionForm({ values, action, editable: _editable }: Transac
           </div>
         ))}
 
-        <fieldset>
-          <label>
-            Customer
-            <select
-              {...register('customerId', { required: true, disabled: !editable.customerId })}
-              className="p-2 border rounded"
-            >
-              <Async value={customers.get} init={[]}>
-                {(data, isLoading) => isLoading
-                  ? <option value="">Loading...</option>
-                  : (<>
-                    <option value="">Pilih Customer</option>
-                    {data.length ? data.map((customer) => (
-                      <option key={customer.id} value={customer.id}>
-                        {customer.name}
-                      </option>
-                    )) : <option value="" disabled>Tidak ada customer</option>}
-                  </>
-                  )}
-              </Async>
-            </select>
-          </label>
+        {editable.customerId
+          ? (
+            <fieldset>
+              <label>
+                Customer
+                <select
+                  {...register('customerId', { valueAsNumber: true })}
+                  className="p-2 border rounded"
+                >
+                  <Async value={customers.get} init={[]}>
+                    {(data, isLoading) => isLoading
+                      ? <option value="">Loading...</option>
+                      : (<>
+                        <option value="">Pilih Customer</option>
+                        {data.length ? data.map((customer) => (
+                          <option key={customer.id} value={customer.id}>
+                            {customer.name}
+                          </option>
+                        )) : <option value="" disabled>Tidak ada customer</option>}
+                      </>
+                      )}
+                  </Async>
+                </select>
+              </label>
 
-          {editable.customerId && (
-            selectedCustomer ? (
-              <button type="button" onClick={() => setValue('customerId', undefined)}>
-                <span className="iconify mdi--close" />
-              </button>
-            ) : (<button type="button" onClick={() => setShowCustomerForm(true)}>
-              <span className="iconify mdi--plus" />
-              <span>Customer Baru</span>
-            </button>)
-          )}
-        </fieldset>
+              {selectedCustomer ? (
+                <button type="button" onClick={() => setValue('customerId', undefined)}>
+                  <span className="iconify mdi--close" />
+                </button>
+              ) : (
+                <button type="button" onClick={() => setShowCustomerForm(true)}>
+                  <span className="iconify mdi--plus" />
+                  <span>Customer Baru</span>
+                </button>
+              )}
+            </fieldset>
+          ) : (
+            <Async<Promise<Awaited<ReturnType<typeof customerApi.get>> | null>>
+              value={typeof values.customerId === 'number' ? customerApi.get(values.customerId) : Promise.resolve(null)}
+              init={null}
+            >
+              {(customer) => (
+                <div className="flex items-center gap-2">
+                  <span>Customer:</span>
+                  <span>{customer?.name ?? 'Not set'}</span>
+                </div>
+              )}
+            </Async>
+          )
+        }
 
         <fieldset>
           <label>
@@ -157,9 +175,8 @@ export function TransactionForm({ values, action, editable: _editable }: Transac
                 type="date"
                 min={new Date().toISOString().split('T')[0]}
                 {...register('dueDate', {
-                  required: true,
                   valueAsDate: true,
-                  disabled: editable.dueDate,
+                  disabled: !editable.dueDate,
                   min: new Date().toISOString().split('T')[0],
                 })}
                 className="p-2 border rounded"
@@ -203,7 +220,7 @@ export function TransactionForm({ values, action, editable: _editable }: Transac
         <div className="flex">
           <button
             type="submit"
-            disabled={!formState.isValid || isSaving || !Object.values(formState.touchedFields).some(Boolean)}
+            disabled={isSaving || !(Object.values(formState.touchedFields).some(Boolean) && formState.isValid)}
           >
             <span>{isSaving ? 'Menyimpan...' : 'Simpan'}</span>
           </button>
@@ -250,7 +267,7 @@ export function TransactionForm({ values, action, editable: _editable }: Transac
 
 function ProductList() {
   const { register, control, watch, setValue } = useFormContext<FieldValues>();
-  const { append, remove } = useFieldArray({ control, name: 'items' });
+  const { append, remove } = useFieldArray({ control, name: 'items', rules: { required: true, minLength: 1 } });
   const addedItems = watch('items');
 
   return (
@@ -260,7 +277,7 @@ function ProductList() {
       </h2>
       <table>
         <tbody>
-          <Async value={() => products.get()} init={[]}>
+          <Async value={products.get} init={[]}>
             {(data, isLoading) => isLoading
               ? <tr><td colSpan={3}>Loading...</td></tr>
               : (<>
@@ -272,9 +289,9 @@ function ProductList() {
                   const qty = addedItems[itemIdx]?.qty;
                   const setQty = (n: number) => {
                     if (itemIdx !== -1) {
-                      if (n <= 0) remove(itemIdx);
-                      else setValue(`${namePrefix}.qty`, n, { shouldTouch: true });
-                    } else {
+                      if (n >= 0) setValue(`${namePrefix}.qty`, n, { shouldTouch: true });
+                      if (n < 1) remove(itemIdx);
+                    } else if (n > 0) {
                       append({ productId: String(product.id), variant: PRODUCT_VARIANT_NO_VARIANTS.name, qty: n });
                     }
                   };
@@ -295,19 +312,27 @@ function ProductList() {
                           ? (
                             <div className="text-sm text-gray-500">Variants is not supported currently.</div>
                           ) : (<>
-                            <button type="button" onClick={() => setQty(qty !== undefined ? qty - 1 : 0)}>
+                            <button
+                              type="button"
+                              disabled={qty < 1 || qty === undefined}
+                              onClick={() => setQty(qty !== undefined ? qty - 1 : 0)}
+                            >
                               <span className="iconify mdi--minus" />
                             </button>
 
                             <input
                               type="number"
                               defaultValue={0}
+                              min={1}
                               {...(itemIdx !== -1
                                 && register(`${namePrefix}.qty`, { required: true, valueAsNumber: true, min: 1 }))}
                               className="p-2 border rounded w-[7ch] font-semibold text-center"
                             />
 
-                            <button type="button" onClick={() => setQty(qty !== undefined ? qty + 1 : 1)}>
+                            <button
+                              type="button"
+                              onClick={() => setQty(qty !== undefined ? qty + 1 : 1)}
+                            >
                               <span className="iconify mdi--plus" />
                             </button>
                           </>)}

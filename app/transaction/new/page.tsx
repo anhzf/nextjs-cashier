@@ -26,7 +26,7 @@ const action: TransactionFormAction = async (values) => {
 
   await createTransaction(v.parse(PayloadSchema, {
     userId: Number(session.user.id),
-    customerId: typeof values.customerId === 'string' ? Number(values.customerId) : undefined,
+    customerId: values.customerId,
     status: values.status as any,
     items: values.items.map((item) => ({
       productId: Number(item.productId),
@@ -41,16 +41,13 @@ const action: TransactionFormAction = async (values) => {
 
 export default async function TransactionViewPage() {
   return (
-    <main>
+    <main className="p-4">
       <h1 className="text-3xl">
         Buat transaksi baru
       </h1>
 
       <TransactionForm
         action={action}
-        editable={{
-          status: false,
-        }}
       />
     </main>
   );

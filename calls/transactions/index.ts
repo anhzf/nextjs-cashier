@@ -201,6 +201,7 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
   ]);
 };
 
+// TODO: Able to create transaction with status completed
 export const createTransaction = async ({ items, ...data }: CreateTransactionData): Promise<number> => db
   .transaction(async (trx) => {
     const [transaction] = await trx.insert(transactions).values(

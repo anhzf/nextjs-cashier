@@ -1,38 +1,15 @@
+'use server';
+
 import { db } from '@/db';
 import { products, productTags } from '@/db/schema';
 import { pick } from '@/utils/object';
 import { and, asc, desc, eq, exists, inArray } from 'drizzle-orm';
-import type { PgColumn } from 'drizzle-orm/pg-core';
 import { notFound } from 'next/navigation';
+import { ALLOWED_PRODUCT_INSERT_FIELDS, ALLOWED_PRODUCT_UPDATE_FIELDS, DEFAULT_LIST_PRODUCTS_QUERY, ProductSortByMap, type ListProductQuery } from './constants';
 
 type Product = typeof products.$inferSelect;
 
-const sortByMap = {
-  name: products.name,
-  createdAt: products.createdAt,
-  updatedAt: products.updatedAt,
-} satisfies Record<string, PgColumn>;
-
-interface ListProductQuery {
-  limit?: number;
-  start?: number;
-  showHidden?: boolean;
-  sortBy?: keyof typeof sortByMap;
-  sort?: 'asc' | 'desc';
-  tag?: number;
-}
-
-const DEFAULT_LIST_PRODUCTS_QUERY = {
-  limit: 10,
-  start: 0,
-  showHidden: false,
-  sortBy: 'name',
-  sort: 'asc',
-} satisfies ListProductQuery;
-
-export const LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY = Object.keys(sortByMap) as (keyof typeof sortByMap)[];
-
-export const listProduct = async (query?: ListProductQuery) => {
+export async function listProduct(query?: ListProductQuery) {
   const mergedQuery = { ...DEFAULT_LIST_PRODUCTS_QUERY, ...query };
   const { limit, start, showHidden, sortBy, sort, tag } = mergedQuery;
 
@@ -50,7 +27,7 @@ export const listProduct = async (query?: ListProductQuery) => {
           ),
       ) : undefined,
     ),
-    orderBy: sort === 'desc' ? desc(sortByMap[sortBy]) : asc(sortByMap[sortBy]),
+    orderBy: sort === 'desc' ? desc(ProductSortByMap[sortBy]) : asc(ProductSortByMap[sortBy]),
     limit,
     offset: start,
     with: {
@@ -74,7 +51,7 @@ export const listProduct = async (query?: ListProductQuery) => {
   return results;
 };
 
-export const getProduct = async (id: number) => {
+export async function getProduct(id: number) {
   const result = await db.query.products.findFirst({
     where: eq(products.id, id),
     with: {
@@ -96,8 +73,6 @@ export const getProduct = async (id: number) => {
   return result;
 };
 
-const ALLOWED_PRODUCT_INSERT_FIELDS = ['name', 'variants', 'unit', 'isHidden'] satisfies (keyof typeof products.$inferInsert)[];
-
 type CreateProductData = Pick<typeof products.$inferInsert, typeof ALLOWED_PRODUCT_INSERT_FIELDS[number]>
   & {
     tags?: {
@@ -105,23 +80,24 @@ type CreateProductData = Pick<typeof products.$inferInsert, typeof ALLOWED_PRODU
     }[]
   };
 
-export const createProduct = async ({ tags, ...data }: CreateProductData): Promise<number> => db.transaction(async (trx) => {
-  const insertData = pick(data, ...ALLOWED_PRODUCT_INSERT_FIELDS);
-  const [result] = await trx.insert(products).values(insertData).returning({
-    id: products.id,
+export async function createProduct({ tags, ...data }: CreateProductData): Promise<number> {
+  return db.transaction(async (trx) => {
+    const insertData = pick(data, ...ALLOWED_PRODUCT_INSERT_FIELDS);
+    const [result] = await trx.insert(products).values(insertData).returning({
+      id: products.id,
+    });
+
+    if (tags?.length) {
+      await trx.insert(productTags).values(tags.map(({ id: tagId }) => ({
+        productId: result.id,
+        tagId,
+      })));
+    }
+
+    return result.id;
   });
+}
 
-  if (tags?.length) {
-    await trx.insert(productTags).values(tags.map(({ id: tagId }) => ({
-      productId: result.id,
-      tagId,
-    })));
-  }
-
-  return result.id;
-});
-
-const ALLOWED_PRODUCT_UPDATE_FIELDS = ['name', 'variants', 'isHidden', 'unit'] satisfies (keyof typeof products.$inferInsert)[];
 
 type UpdateProductData = Partial<Pick<typeof products.$inferInsert, typeof ALLOWED_PRODUCT_UPDATE_FIELDS[number]>>
   & {
@@ -131,40 +107,42 @@ type UpdateProductData = Partial<Pick<typeof products.$inferInsert, typeof ALLOW
     }[]
   };
 
-export const updateProduct = async (id: number, { tags, ...data }: UpdateProductData): Promise<void> => db.transaction(async (trx) => {
-  const productUpdate = {
-    ...pick(data, ...ALLOWED_PRODUCT_UPDATE_FIELDS),
-    updatedAt: new Date(),
-  };
+export async function updateProduct(id: number, { tags, ...data }: UpdateProductData): Promise<void> {
+  return db.transaction(async (trx) => {
+    const productUpdate = {
+      ...pick(data, ...ALLOWED_PRODUCT_UPDATE_FIELDS),
+      updatedAt: new Date(),
+    };
 
-  const updates: Promise<any>[] = [];
+    const updates: Promise<any>[] = [];
 
-  const updateResults = trx.update(products).set(productUpdate).where(eq(products.id, id)).returning({
-    id: products.id,
+    const updateResults = trx.update(products).set(productUpdate).where(eq(products.id, id)).returning({
+      id: products.id,
+    });
+    updates.push(updateResults);
+
+    if (tags?.length) {
+      const tagAdds = tags.filter(({ type }) => type === 'add').map(({ id: tagId }) => ({
+        productId: id,
+        tagId,
+      }));
+      const tagRemoves = tags.filter(({ type }) => type === 'remove').map(({ id }) => id);
+
+      if (tagAdds.length) updates.push(trx.insert(productTags).values(tagAdds).onConflictDoNothing());
+      if (tagRemoves.length) updates.push(trx.delete(productTags).where(and(
+        eq(productTags.productId, id),
+        inArray(productTags.tagId, tagRemoves),
+      )));
+    }
+
+    await Promise.all(updates);
+
+    const [result] = await updateResults;
+    if (!result) return notFound();
   });
-  updates.push(updateResults);
+}
 
-  if (tags?.length) {
-    const tagAdds = tags.filter(({ type }) => type === 'add').map(({ id: tagId }) => ({
-      productId: id,
-      tagId,
-    }));
-    const tagRemoves = tags.filter(({ type }) => type === 'remove').map(({ id }) => id);
-
-    if (tagAdds.length) updates.push(trx.insert(productTags).values(tagAdds).onConflictDoNothing());
-    if (tagRemoves.length) updates.push(trx.delete(productTags).where(and(
-      eq(productTags.productId, id),
-      inArray(productTags.tagId, tagRemoves),
-    )));
-  }
-
-  await Promise.all(updates);
-
-  const [result] = await updateResults;
-  if (!result) return notFound();
-});
-
-export const deleteProduct = async (id: number): Promise<void> => {
+export async function deleteProduct(id: number): Promise<void> {
   const [result] = await db.delete(products).where(eq(products.id, id)).returning({
     id: products.id,
   });

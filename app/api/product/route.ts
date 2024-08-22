@@ -1,5 +1,6 @@
 import { auth } from '@/auth';
-import { LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY, createProduct, listProduct } from '@/calls/products';
+import { createProduct, listProduct } from '@/calls/products';
+import { LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY } from '@/calls/products/constants';
 import { defineApi } from '@/utils/api';
 import { notAuthorized } from '@/utils/errors';
 import { BooleanQuerySchema, NumberQuerySchema } from '@/utils/validation';

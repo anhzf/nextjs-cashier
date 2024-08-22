@@ -49,7 +49,7 @@ export default async function TransactionViewPage({ params }: PageProps) {
   ]);
 
   return (
-    <main>
+    <main className="p-4">
       <h1 className="text-3xl">
         Transaksi #{data.code ?? transactionId}
       </h1>
@@ -68,7 +68,7 @@ export default async function TransactionViewPage({ params }: PageProps) {
           items: true,
         }}
         values={{
-          customerId: String(data.customer?.id ?? ''),
+          customerId: data.customer?.id ?? NaN,
           status: data.status,
           items: data.items.map((item) => ({
             productId: String(item.product.id),

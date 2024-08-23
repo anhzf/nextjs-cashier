@@ -19,11 +19,13 @@ interface FieldValues {
     qty: number;
   }[];
   dueDate?: Date;
+  paid?: number;
 }
 
 const INITIAL_VALUES: FieldValues = {
   status: 'pending',
   items: [],
+  paid: 0,
 };
 
 const DEFAULT_EDITABLE = {
@@ -31,6 +33,7 @@ const DEFAULT_EDITABLE = {
   customerId: true,
   items: true,
   dueDate: true,
+  paid: true,
 };
 
 export type TransactionFormAction = (values: FieldValues, before?: FieldValues) => Promise<void>;
@@ -167,7 +170,7 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
           </label>
         </fieldset>
 
-        {status === 'pending' && (
+        {status === 'pending' && (<>
           <fieldset>
             <label>
               Tanggal Jatuh Tempo
@@ -183,7 +186,19 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
               />
             </label>
           </fieldset>
-        )}
+
+          <fieldset>
+            <label>
+              Jumlah Bayar
+              <input
+                type="number"
+                min={0}
+                {...register('paid', { valueAsNumber: true, disabled: !editable.paid })}
+                className="p-2 border rounded"
+              />
+            </label>
+          </fieldset>
+        </>)}
 
         <hr />
 

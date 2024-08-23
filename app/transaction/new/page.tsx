@@ -22,6 +22,7 @@ const action: TransactionFormAction = async (values) => {
       qty: v.number(),
     })),
     dueDate: v.optional(v.date()),
+    paid: v.optional(v.number()),
   }, 'Invalid payload');
 
   await createTransaction(v.parse(PayloadSchema, {
@@ -34,6 +35,7 @@ const action: TransactionFormAction = async (values) => {
       qty: Number(item.qty),
     })),
     dueDate: values.dueDate,
+    paid: values.paid,
   } satisfies v.InferInput<typeof PayloadSchema>));
 
   return redirect('/');

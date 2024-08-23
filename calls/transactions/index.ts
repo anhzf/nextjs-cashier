@@ -93,7 +93,7 @@ export const getTransaction = async (id: number) => {
 };
 
 const ALLOWED_TRANSACTION_INSERT_FIELDS = [
-  'userId', 'customerId', 'code', 'dueDate',
+  'userId', 'customerId', 'code', 'dueDate', 'paid'
 ] satisfies (keyof typeof transactions.$inferInsert)[];
 
 const REQUIRED_TRANSACTION_ITEM_INSERT_FIELDS = [

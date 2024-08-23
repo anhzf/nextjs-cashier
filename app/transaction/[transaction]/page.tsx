@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 const createAction = (id: number): TransactionFormAction => (
-  async ({ status, dueDate, items }, before) => {
+  async ({ status, dueDate, items, paid }, before) => {
     'use server';
 
     // Ensure that we're only updating the fields that have changed
@@ -18,7 +18,7 @@ const createAction = (id: number): TransactionFormAction => (
 
     if (before?.status !== status) {
       const value = v.parse(v.picklist(TRANSACTION_STATUSES), status);
-      updates.push(updateTransaction(id, { status: value, dueDate }));
+      updates.push(updateTransaction(id, { status: value, dueDate, paid }));
     }
 
     const hasItemsChange = items.length !== before?.items.length
@@ -75,6 +75,8 @@ export default async function TransactionViewPage({ params }: PageProps) {
             variant: item.variant,
             qty: item.qty,
           })),
+          paid: data.paid,
+          dueDate: data.dueDate || undefined,
         }}
         action={createAction(transactionId)}
       />

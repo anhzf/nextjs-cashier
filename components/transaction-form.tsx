@@ -1,5 +1,5 @@
 'use client';
-
+/* TODO: Fix form validity state */
 import { customerApi, productApi } from '@/client/calls';
 import { Async } from '@/components/async';
 import { CustomerForm } from '@/components/customer-form';
@@ -7,7 +7,7 @@ import { PRODUCT_VARIANT_NO_VARIANTS, TRANSACTION_STATUSES } from '@/constants';
 import { createCache } from '@/utils/cache';
 import { getPriceDisplay } from '@/utils/models';
 import { cn } from '@/utils/ui';
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import { FormProvider, useFieldArray, useForm, useFormContext, type SubmitHandler } from 'react-hook-form';
 
 interface FieldValues {
@@ -88,7 +88,7 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
   return (
     <div className="flex gap-4">
       {/* <pre className="whitespace-pre">
-        {JSON.stringify(watch(), null, 2)}
+        {JSON.stringify([formMethods.formState.isValid, formMethods.getFieldState('items')], null, 2)}
       </pre> */}
 
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -212,7 +212,7 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
 
                 return (
                   <li key={i}>
-                    {product?.name} <span className="text-gray-500">x{item.qty}</span> - {priceFormatter.format(total)}
+                    {product?.name} <span className="text-gray-500">x{item.qty} {product?.unit}</span> - {priceFormatter.format(total)}
                   </li>
                 );
               })}
@@ -235,7 +235,7 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
         <div className="flex">
           <button
             type="submit"
-            disabled={isSaving || !(Object.values(formState.touchedFields).some(Boolean) && formState.isValid)}
+            disabled={isSaving || !(Object.values(formState.touchedFields).some(Boolean)/*  && formState.isValid */)}
           >
             <span>{isSaving ? 'Menyimpan...' : 'Simpan'}</span>
           </button>
@@ -350,6 +350,10 @@ function ProductList() {
                             >
                               <span className="iconify mdi--plus" />
                             </button>
+
+                            <span>
+                              {product.unit}
+                            </span>
                           </>)}
                       </td>
                     </tr>

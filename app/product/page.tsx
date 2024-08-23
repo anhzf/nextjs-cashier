@@ -102,6 +102,9 @@ export default async function ProductPage({ searchParams }: PageProps) {
                   </span>
                 ))}
               </td>
+              <td className="w-[8ch]">
+                {product.stock} {product.unit}
+              </td>
               <td className="p-2">
                 <Link href={`/product/${product.id}`} className="btn">
                   <span className="iconify mdi--pencil" />

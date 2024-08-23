@@ -1,10 +1,9 @@
-// TODO: Handle stocking behavior, it determined from the `transaction.isStocking`. If true then the product stock will be increased, otherwise it will be decreased.
 import { db } from '@/db';
 import { products, transactionItems, transactions, type transactionStatusEnum } from '@/db/schema';
 import type { DbTransaction } from '@/types/db';
 import { badRequest } from '@/utils/errors';
 import { pick } from '@/utils/object';
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { type PgColumn } from 'drizzle-orm/pg-core';
 import { notFound } from 'next/navigation';
 
@@ -37,7 +36,10 @@ export const listTransaction = async (query?: ListTransactionQuery) => {
   const { limit, start, sortBy, sort, status } = { ...DEFAULT_LIST_TRANSACTIONS_QUERY, ...query };
 
   const results = await db.query.transactions.findMany({
-    where: status && eq(transactions.status, status),
+    where: and(
+      eq(transactions.isStocking, false),
+      status && eq(transactions.status, status),
+    ),
     orderBy: sort === 'desc' ? desc(sortByMap[sortBy]) : asc(sortByMap[sortBy]),
     limit,
     offset: start,
@@ -93,7 +95,7 @@ export const getTransaction = async (id: number) => {
 };
 
 const ALLOWED_TRANSACTION_INSERT_FIELDS = [
-  'userId', 'customerId', 'code', 'dueDate', 'paid'
+  'userId', 'customerId', 'code', 'dueDate', 'paid', 'isStocking',
 ] satisfies (keyof typeof transactions.$inferInsert)[];
 
 const REQUIRED_TRANSACTION_ITEM_INSERT_FIELDS = [
@@ -101,7 +103,7 @@ const REQUIRED_TRANSACTION_ITEM_INSERT_FIELDS = [
 ] satisfies (keyof typeof transactionItems.$inferInsert)[];
 
 const OPTIONAL_TRANSACTION_ITEM_INSERT_FIELDS = [
-  'price', 'qty'
+  'price', 'qty',
 ] satisfies (keyof typeof transactionItems.$inferInsert)[];
 
 type InsertTransaction = Pick<typeof transactions.$inferInsert, typeof ALLOWED_TRANSACTION_INSERT_FIELDS[number]>;
@@ -128,7 +130,13 @@ const verifyTransactionItemsUpdateAvailability = async (id: number, trx?: DbTran
   );
 };
 
-const _updateItemsInTransaction = async (id: number, items: InsertTransactionItem[], trx?: DbTransaction): Promise<void> => {
+interface UpdateItemsInTransactionData {
+  id: number;
+  items: InsertTransactionItem[];
+  isStocking?: boolean;
+}
+
+const _updateItemsInTransaction = async ({ id, items, isStocking }: UpdateItemsInTransactionData, trx?: DbTransaction): Promise<void> => {
   const _ = trx ?? db;
 
   await verifyTransactionItemsUpdateAvailability(id, trx);
@@ -156,6 +164,7 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
     columns: {
       id: true,
       variants: true,
+      stock: true,
     },
   });
 
@@ -170,6 +179,7 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
     return price;
   }
 
+  // Pick items that not exists in transactionItems
   const insertedItems = validatedItems
     .filter((item) => existingItems.findIndex((existing) => (existing.productId === item.productId)) === -1)
     .map((item) => ({
@@ -178,19 +188,28 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
       transactionId: id
     }));
 
+  // Pick items that exists in transactionItems
   const updatedItems = validatedItems
     .filter((item) => existingItems.findIndex((existing) => (existing.productId === item.productId)) !== -1)
-    .map((item) => pick({
+    .map((item) => ({
       ...item,
       id: existingItems.find((existing) => existing.id)!.id,
       price: item.price ?? findPrice(item.productId, item.variant),
       transactionId: id,
     }));
 
-  await Promise.all([
+  console.log({
+    added: insertedItems.length,
+    updated: updatedItems.length,
+  });
+
+  const queries = [
+    // Insert new items to transaction
     insertedItems.length
       ? _.insert(transactionItems).values(insertedItems)
-      : Promise.resolve(),
+      : undefined,
+
+    // Update existing items in transaction
     ...updatedItems.map(({ transactionId, productId, id, ...item }) => _
       .update(transactionItems).set({
         ...item,
@@ -198,7 +217,27 @@ const _updateItemsInTransaction = async (id: number, items: InsertTransactionIte
       })
       .where(eq(transactionItems.id, id))
     ),
-  ]);
+
+    // Update stock
+    ...insertedItems.map((item) => _.update(products)
+      .set({
+        stock: sql`${products.stock} + ${isStocking ? (item.qty ?? 1) : -(item.qty ?? 1)}`,
+      })
+      .where(eq(products.id, item.productId))),
+    ...updatedItems.map((item) => {
+      const qtyDiff = (item.qty ?? 1) - existingItems.find((existing) => existing.id === item.id)!.qty;
+      return _.update(products)
+        .set({
+          stock: sql`${products.stock} + ${isStocking ? qtyDiff : -qtyDiff}`,
+        })
+        .where(eq(products.id, item.productId));
+    }),
+  ];
+
+  queries
+    .forEach((query) => console.log(query?.toSQL()));
+
+  await Promise.all(queries);
 };
 
 // TODO: Able to create transaction with status completed
@@ -210,7 +249,7 @@ export const createTransaction = async ({ items, ...data }: CreateTransactionDat
       id: transactions.id,
     });
 
-    await _updateItemsInTransaction(transaction.id, items, trx);
+    await _updateItemsInTransaction({ id: transaction.id, items, isStocking: data.isStocking }, trx);
 
     return transaction.id;
   });
@@ -244,7 +283,7 @@ export const deleteTransaction = async (id: number): Promise<void> => {
 };
 
 export const addItemsToTransaction = async (id: number, items: InsertTransactionItem[]): Promise<void> => {
-  await _updateItemsInTransaction(id, items);
+  await _updateItemsInTransaction({ id, items });
 };
 
 type UpdateTransactionItem = Omit<Partial<InsertTransactionItem>, 'productId' | 'variant'>;

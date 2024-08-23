@@ -21,6 +21,10 @@ export function HomePageClient(props: PageProps) {
             <span className="iconify mdi--plus" />
             <span>Transaksi Baru</span>
           </Link>
+          <Link href="/stock/new" className="btn">
+            <span className="iconify mdi--plus" />
+            <span>Tambah Stok</span>
+          </Link>
         </div>
       </div>
     </>

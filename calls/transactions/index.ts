@@ -136,7 +136,7 @@ interface UpdateItemsInTransactionData {
   isStocking?: boolean;
 }
 
-const _updateItemsInTransaction = async ({ id, items, isStocking }: UpdateItemsInTransactionData, trx?: DbTransaction): Promise<void> => {
+const _updateItemsInTransaction = async ({ id, items, isStocking = false }: UpdateItemsInTransactionData, trx?: DbTransaction): Promise<void> => {
   const _ = trx ?? db;
 
   await verifyTransactionItemsUpdateAvailability(id, trx);
@@ -163,6 +163,7 @@ const _updateItemsInTransaction = async ({ id, items, isStocking }: UpdateItemsI
       .map((item) => item.productId)),
     columns: {
       id: true,
+      name: true,
       variants: true,
       stock: true,
     },
@@ -177,7 +178,7 @@ const _updateItemsInTransaction = async ({ id, items, isStocking }: UpdateItemsI
     }
 
     return price;
-  }
+  };
 
   // Pick items that not exists in transactionItems
   const insertedItems = validatedItems
@@ -198,10 +199,7 @@ const _updateItemsInTransaction = async ({ id, items, isStocking }: UpdateItemsI
       transactionId: id,
     }));
 
-  console.log({
-    added: insertedItems.length,
-    updated: updatedItems.length,
-  });
+  // console.log({ insertedItems, updatedItems });
 
   const queries = [
     // Insert new items to transaction
@@ -219,23 +217,31 @@ const _updateItemsInTransaction = async ({ id, items, isStocking }: UpdateItemsI
     ),
 
     // Update stock
-    ...insertedItems.map((item) => _.update(products)
-      .set({
-        stock: sql`${products.stock} + ${isStocking ? (item.qty ?? 1) : -(item.qty ?? 1)}`,
-      })
-      .where(eq(products.id, item.productId))),
-    ...updatedItems.map((item) => {
-      const qtyDiff = (item.qty ?? 1) - existingItems.find((existing) => existing.id === item.id)!.qty;
+    ...insertedItems.map((item) => {
+      const { name, stock } = priceReferences.find((product) => product.id === item.productId)!;
+      const stockDelta = isStocking ? (item.qty ?? 1) : -(item.qty ?? 1);
+      const finalStock = stock + stockDelta;
+      // console.log({ isStocking, stock, stockDelta, finalStock });
+      if (finalStock < 0) throw new Error(`Insufficient stock for product ${name} [${item.productId}]`);
+
       return _.update(products)
-        .set({
-          stock: sql`${products.stock} + ${isStocking ? qtyDiff : -qtyDiff}`,
-        })
+        .set({ stock: stockDelta })
+        .where(eq(products.id, item.productId));
+    }),
+    ...updatedItems.map((item) => {
+      const { name, stock } = priceReferences.find((product) => product.id === item.productId)!;
+      const before = existingItems.find((existing) => existing.id === item.id)!;
+      const qtyDiff = (item.qty ?? 1) - before.qty;
+      const stockDelta = isStocking ? qtyDiff : -qtyDiff;
+      const finalStock = stock + stockDelta;
+      // console.log({ isStocking, before: before.qty, setTo: item.qty ?? 1, stock, stockDelta, finalStock });
+      if (finalStock < 0) throw new Error(`Insufficient stock for product ${name} [${item.productId}]`);
+
+      return _.update(products)
+        .set({ stock: finalStock })
         .where(eq(products.id, item.productId));
     }),
   ];
-
-  queries
-    .forEach((query) => console.log(query?.toSQL()));
 
   await Promise.all(queries);
 };

@@ -61,7 +61,7 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
   const [isSaving, startSaving] = useTransition();
 
   const formMethods = useForm<FieldValues>({ defaultValues: values });
-  const { register, watch, formState, setValue, handleSubmit } = formMethods;
+  const { register, watch, formState: { touchedFields }, setValue, handleSubmit } = formMethods;
 
   const selectedCustomer = watch('customerId');
   const status = watch('status');
@@ -80,8 +80,12 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
 
   const onSubmit: SubmitHandler<FieldValues> = (payload) => {
     startSaving(async () => {
-      await action?.(payload, values);
-      setMessages([{ msg: 'Berhasil menyimpan data transaksi.', type: 'positive' }]);
+      try {
+        await action?.(payload, values);
+        setMessages([{ msg: 'Berhasil menyimpan data transaksi.', type: 'positive' }]);
+      } catch (err) {
+        setMessages([{ msg: String(err), type: 'negative' }]);
+      }
     });
   };
 
@@ -235,7 +239,7 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
         <div className="flex">
           <button
             type="submit"
-            disabled={isSaving || !(Object.values(formState.touchedFields).some(Boolean)/*  && formState.isValid */)}
+            disabled={isSaving || !(Object.values(touchedFields).some(Boolean)/*  && formState.isValid */)}
           >
             <span>{isSaving ? 'Menyimpan...' : 'Simpan'}</span>
           </button>
@@ -301,7 +305,8 @@ function ProductList() {
                     && !(PRODUCT_VARIANT_NO_VARIANTS.name in product.variants);
                   const itemIdx = addedItems.findIndex((item) => item.productId === String(product.id));
                   const namePrefix = `items.${itemIdx}` as const;
-                  const qty = addedItems[itemIdx]?.qty;
+                  const qty: number | undefined = addedItems[itemIdx]?.qty;
+                  const isOutOfStock = qty === undefined ? product.stock < 1 : qty >= product.stock;
                   const setQty = (n: number) => {
                     if (itemIdx !== -1) {
                       if (n >= 0) setValue(`${namePrefix}.qty`, n, { shouldTouch: true });
@@ -317,7 +322,11 @@ function ProductList() {
                       className="[&:not(:last-child)]:border-b"
                     >
                       <td className="p-2 min-w-[20ch]">
-                        {product.name}
+                        <div>{product.name}</div>
+                        <div>
+                          <span className="text-gray-500">Stok: </span>
+                          <b>{product.stock}</b> {product.unit}
+                        </div>
                       </td>
                       <td className="p-2 text-gray-500">
                         {getPriceDisplay(product.variants)}
@@ -339,13 +348,17 @@ function ProductList() {
                               type="number"
                               defaultValue={0}
                               min={1}
-                              {...(itemIdx !== -1
-                                && register(`${namePrefix}.qty`, { required: true, valueAsNumber: true, min: 1 }))}
+                              max={product.stock}
+                              readOnly={isOutOfStock}
+                              {...(itemIdx !== -1 && register(`${namePrefix}.qty`, {
+                                required: true, valueAsNumber: true, min: 1, max: product.stock,
+                              }))}
                               className="p-2 border rounded w-[7ch] font-semibold text-center"
                             />
 
                             <button
                               type="button"
+                              disabled={isOutOfStock}
                               onClick={() => setQty(qty !== undefined ? qty + 1 : 1)}
                             >
                               <span className="iconify mdi--plus" />

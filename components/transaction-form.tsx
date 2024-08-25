@@ -10,7 +10,7 @@ import { cn } from '@/utils/ui';
 import { useMemo, useState, useTransition } from 'react';
 import { FormProvider, useFieldArray, useForm, useFormContext, type SubmitHandler } from 'react-hook-form';
 
-interface FieldValues {
+export interface TransactionFieldValues {
   customerId?: number;
   status: string;
   items: {
@@ -22,7 +22,7 @@ interface FieldValues {
   paid?: number;
 }
 
-const INITIAL_VALUES: FieldValues = {
+const INITIAL_VALUES: TransactionFieldValues = {
   status: 'pending',
   items: [],
   paid: 0,
@@ -36,10 +36,10 @@ const DEFAULT_EDITABLE = {
   paid: true,
 };
 
-export type TransactionFormAction = (values: FieldValues, before?: FieldValues) => Promise<void>;
+export type TransactionFormAction = (values: TransactionFieldValues, before?: TransactionFieldValues) => Promise<void>;
 
 interface TransactionFormProps {
-  values?: FieldValues;
+  values?: TransactionFieldValues;
   action?: TransactionFormAction;
   editable?: Partial<typeof DEFAULT_EDITABLE>;
 }
@@ -60,7 +60,7 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
-  const formMethods = useForm<FieldValues>({ defaultValues: values });
+  const formMethods = useForm<TransactionFieldValues>({ defaultValues: values });
   const { register, watch, formState: { touchedFields }, setValue, handleSubmit } = formMethods;
 
   const selectedCustomer = watch('customerId');
@@ -78,7 +78,7 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
     [items],
   );
 
-  const onSubmit: SubmitHandler<FieldValues> = (payload) => {
+  const onSubmit: SubmitHandler<TransactionFieldValues> = (payload) => {
     startSaving(async () => {
       try {
         await action?.(payload, values);
@@ -285,7 +285,7 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
 }
 
 function ProductList() {
-  const { register, control, watch, setValue } = useFormContext<FieldValues>();
+  const { formState: { defaultValues }, register, control, watch, setValue } = useFormContext<TransactionFieldValues>();
   const { append, remove } = useFieldArray({ control, name: 'items', rules: { required: true, minLength: 1 } });
   const addedItems = watch('items');
 
@@ -305,8 +305,10 @@ function ProductList() {
                     && !(PRODUCT_VARIANT_NO_VARIANTS.name in product.variants);
                   const itemIdx = addedItems.findIndex((item) => item.productId === String(product.id));
                   const namePrefix = `items.${itemIdx}` as const;
+                  const initQty = defaultValues?.items?.[itemIdx]?.qty ?? 0;
                   const qty: number | undefined = addedItems[itemIdx]?.qty;
-                  const isOutOfStock = qty === undefined ? product.stock < 1 : qty >= product.stock;
+                  const isOutOfStock = qty === undefined
+                    ? product.stock < 1 : (qty - initQty) >= product.stock;
                   const setQty = (n: number) => {
                     if (itemIdx !== -1) {
                       if (n >= 0) setValue(`${namePrefix}.qty`, n, { shouldTouch: true });
@@ -325,7 +327,7 @@ function ProductList() {
                         <div>{product.name}</div>
                         <div>
                           <span className="text-gray-500">Stok: </span>
-                          <b>{product.stock}</b> {product.unit}
+                          <b>{product.stock - (qty - initQty)}</b> {product.unit}
                         </div>
                       </td>
                       <td className="p-2 text-gray-500">
@@ -348,10 +350,10 @@ function ProductList() {
                               type="number"
                               defaultValue={0}
                               min={1}
-                              max={product.stock}
+                              max={initQty + product.stock}
                               readOnly={isOutOfStock}
                               {...(itemIdx !== -1 && register(`${namePrefix}.qty`, {
-                                required: true, valueAsNumber: true, min: 1, max: product.stock,
+                                required: true, valueAsNumber: true, min: 1, max: initQty + product.stock,
                               }))}
                               className="p-2 border rounded w-[7ch] font-semibold text-center"
                             />

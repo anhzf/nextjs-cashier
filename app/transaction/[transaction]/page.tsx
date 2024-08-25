@@ -1,5 +1,5 @@
 import { addItemsToTransaction, getTransaction, updateTransaction } from '@/calls/transactions';
-import { TransactionForm, type TransactionFormAction } from '@/components/transaction-form';
+import { TransactionForm, type TransactionFieldValues, type TransactionFormAction } from '@/components/transaction-form';
 import { TRANSACTION_STATUSES } from '@/constants';
 import * as v from 'valibot';
 
@@ -9,7 +9,7 @@ interface PageProps {
   };
 }
 
-const createAction = (id: number): TransactionFormAction => (
+const createAction = (id: number, before: TransactionFieldValues): TransactionFormAction => (
   async ({ status, dueDate, items, paid }, before) => {
     'use server';
 
@@ -21,6 +21,7 @@ const createAction = (id: number): TransactionFormAction => (
       updates.push(updateTransaction(id, { status: value, dueDate, paid }));
     }
 
+    /* TODO: Use 'just-diff'.diff() to find the item updates */
     const hasItemsChange = items.length !== before?.items.length
       || items.some((item, index) => (
         item.productId !== before.items[index].productId
@@ -47,6 +48,17 @@ export default async function TransactionViewPage({ params }: PageProps) {
   ] = await Promise.all([
     getTransaction(transactionId),
   ]);
+  const fieldValues: TransactionFieldValues = {
+    customerId: data.customer?.id ?? NaN,
+    status: data.status,
+    items: data.items.map((item) => ({
+      productId: String(item.product.id),
+      variant: item.variant,
+      qty: item.qty,
+    })),
+    paid: data.paid,
+    dueDate: data.dueDate || undefined,
+  };
 
   return (
     <main className="p-4">
@@ -67,18 +79,8 @@ export default async function TransactionViewPage({ params }: PageProps) {
           status: true,
           items: true,
         }}
-        values={{
-          customerId: data.customer?.id ?? NaN,
-          status: data.status,
-          items: data.items.map((item) => ({
-            productId: String(item.product.id),
-            variant: item.variant,
-            qty: item.qty,
-          })),
-          paid: data.paid,
-          dueDate: data.dueDate || undefined,
-        }}
-        action={createAction(transactionId)}
+        values={fieldValues}
+        action={createAction(transactionId, fieldValues)}
       />
     </main>
   );

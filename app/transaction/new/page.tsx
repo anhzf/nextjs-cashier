@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { createTransaction } from '@/calls/transactions';
 import { TransactionForm, type TransactionFormAction } from '@/components/transaction-form';
+import { Button } from '@/components/ui/button';
 import { ROUTE_SESSION_FAILED, TRANSACTION_STATUSES } from '@/constants';
 import { redirect } from 'next/navigation';
 import * as v from 'valibot';
@@ -43,13 +44,21 @@ const action: TransactionFormAction = async (values) => {
 
 export default async function TransactionNewPage() {
   return (
-    <main className="p-4">
-      <h1 className="text-3xl">
-        Buat transaksi baru
-      </h1>
+    <main className="container h-screen flex flex-col gap-6 py-4">
+      <div className="flex justify-between gap-4">
+        <h1 className="text-3xl">
+          Buat transaksi baru
+        </h1>
+
+        <Button type="submit" form="transaction/new">
+          Simpan
+        </Button>
+      </div>
 
       <TransactionForm
+        formId="transaction/new"
         action={action}
+        className="flex-1"
       />
     </main>
   );

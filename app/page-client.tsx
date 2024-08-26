@@ -1,7 +1,10 @@
 'use client';
 
+import { AppDrawerContext } from '@/components/app-drawer';
+import { Button } from '@/components/ui/button';
 import type { transactions } from '@/db/schema';
 import Link from 'next/link';
+import { useContext } from 'react';
 
 type Transaction = typeof transactions.$inferSelect;
 
@@ -11,9 +14,15 @@ interface PageProps {
 
 // With this convention, it enables to use client states even using async server components.
 export function HomePageClient(props: PageProps) {
+  const appDrawer = useContext(AppDrawerContext);
+
   return (
     <>
       <div className="flex gap-4">
+        <Button>
+          <span className="iconify mdi--menu" onClick={() => appDrawer?.setIsOpen(true)} />
+        </Button>
+
         <TransactionListView data={props.transactions} />
 
         <div className="flex flex-col">

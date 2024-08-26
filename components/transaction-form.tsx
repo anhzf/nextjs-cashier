@@ -1,14 +1,24 @@
 'use client';
 /* TODO: Fix form validity state */
-import { customerApi, productApi } from '@/client/calls';
+/* TODO: Fix broken select status */
+/* TODO: Prevent form saving when customer form is submitting */
+import { createCustomerQuery, createCustomersQuery, createProductsQuery } from '@/client/queries';
 import { Async } from '@/components/async';
 import { CustomerForm } from '@/components/customer-form';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PRODUCT_VARIANT_NO_VARIANTS, TRANSACTION_STATUSES } from '@/constants';
-import { createCache } from '@/utils/cache';
-import { getPriceDisplay } from '@/utils/models';
 import { cn } from '@/utils/ui';
+import { DialogDescription } from '@radix-ui/react-dialog';
+import { useQuery } from '@tanstack/react-query';
+import { CalendarIcon, DollarSignIcon, MinusIcon, PlusIcon, SearchIcon, ShoppingCartIcon, UserIcon } from 'lucide-react';
 import { useMemo, useState, useTransition } from 'react';
-import { FormProvider, useFieldArray, useForm, useFormContext, type SubmitHandler } from 'react-hook-form';
+import { Controller, FormProvider, useFieldArray, useForm, useFormContext, type SubmitHandler } from 'react-hook-form';
 
 export interface TransactionFieldValues {
   customerId?: number;
@@ -38,7 +48,8 @@ const DEFAULT_EDITABLE = {
 
 export type TransactionFormAction = (values: TransactionFieldValues, before?: TransactionFieldValues) => Promise<void>;
 
-interface TransactionFormProps {
+interface TransactionFormProps extends React.ComponentProps<'div'> {
+  formId?: string;
   values?: TransactionFieldValues;
   action?: TransactionFormAction;
   editable?: Partial<typeof DEFAULT_EDITABLE>;
@@ -46,37 +57,51 @@ interface TransactionFormProps {
 
 const priceFormatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
 
-const customers = createCache('customers', () => customerApi.list());
-const products = createCache('products', () => productApi.list({ showHidden: 'true' }));
-
 // TODO: Add allowed editable fields props
 // Found case are in transaction form, where we need to add allowed fields to be edited
 // such as status, customerId, and items
 // Also, creating completed status for transaction is currently not allowed
-export function TransactionForm({ values = INITIAL_VALUES, action, editable: _editable }: TransactionFormProps) {
+export function TransactionForm({
+  formId,
+  values = INITIAL_VALUES,
+  action,
+  editable: _editable,
+  className,
+  ...props
+}: TransactionFormProps) {
   const editable = useMemo(() => ({ ...DEFAULT_EDITABLE, ..._editable }), [_editable]);
 
   const [messages, setMessages] = useState<{ msg: string; type?: 'positive' | 'negative' }[]>([]);
-  const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [isSaving, startSaving] = useTransition();
 
-  const formMethods = useForm<TransactionFieldValues>({ defaultValues: values });
-  const { register, watch, formState: { touchedFields }, setValue, handleSubmit } = formMethods;
+  const { data: products } = useQuery(createProductsQuery());
+  const { data: customer, isLoading: isCustomerLoading } = useQuery(createCustomerQuery(values.customerId ?? NaN));
 
-  const selectedCustomer = watch('customerId');
+  const formMethods = useForm<TransactionFieldValues>({ defaultValues: values });
+  const { control, register, watch, handleSubmit } = formMethods;
+
   const status = watch('status');
+  const partialPayment = watch('paid');
   const items = watch('items');
 
   const subtotal = useMemo(
     async () => {
-      const list = await products.get();
+      const list = products ?? [];
       return items.reduce((acc, item) => {
         const product = list.find((product) => product.id === Number(item.productId))!;
         return acc + product?.variants[item.variant]?.price * item.qty;
       }, 0);
     },
-    [items],
+    [items, products],
   );
+
+  const getTotalItems = () => items.reduce((sum, { qty }) => sum + qty, 0);
+
+  const getRemainingBalance = async () => {
+    const total = await subtotal;
+    const paid = partialPayment || 0;
+    return Math.max(total - paid, 0);
+  };
 
   const onSubmit: SubmitHandler<TransactionFieldValues> = (payload) => {
     startSaving(async () => {
@@ -90,294 +115,335 @@ export function TransactionForm({ values = INITIAL_VALUES, action, editable: _ed
   };
 
   return (
-    <div className="flex gap-4">
-      {/* <pre className="whitespace-pre">
+    <FormProvider {...formMethods}>
+      <>
+        {/* <pre className="whitespace-pre">
         {JSON.stringify([formMethods.formState.isValid, formMethods.getFieldState('items')], null, 2)}
       </pre> */}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        {messages.map(({ msg, type }) => (
-          <div
-            key={msg}
-            className={cn({ 'text-green-400': type === 'positive', 'text-red-400': type === 'negative' })}
-          >
-            {msg}
+        <form
+          id={formId}
+          className="shrink-0 flex flex-col gap-2"
+          onSubmit={handleSubmit(onSubmit)}
+        >
+          {messages.map(({ msg, type }) => (
+            <div
+              key={msg}
+              className={cn({ 'text-green-400': type === 'positive', 'text-red-400': type === 'negative' })}
+            >
+              {msg}
+            </div>
+          ))}
+
+          <div className="flex items-center gap-2">
+            <UserIcon className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium">
+              {isCustomerLoading ? 'Loading...' : customer?.name || 'Pilih Kustomer'}
+            </span>
+
+            {editable.customerId === true && (
+              <CustomerSelector
+                trigger={(
+                  <Button variant="outline" size="sm">Ubah</Button>
+                )}
+              />
+            )}
           </div>
-        ))}
 
-        {editable.customerId
-          ? (
-            <fieldset>
-              <label>
-                Customer
-                <select
-                  {...register('customerId', { valueAsNumber: true })}
-                  className="p-2 border rounded"
-                >
-                  <Async value={customers.get} init={[]}>
-                    {(data, isLoading) => isLoading
-                      ? <option value="">Loading...</option>
-                      : (<>
-                        <option value="">Pilih Customer</option>
-                        {data.length ? data.map((customer) => (
-                          <option key={customer.id} value={customer.id}>
-                            {customer.name}
-                          </option>
-                        )) : <option value="" disabled>Tidak ada customer</option>}
-                      </>
-                      )}
-                  </Async>
-                </select>
-              </label>
-
-              {selectedCustomer ? (
-                <button type="button" onClick={() => setValue('customerId', undefined)}>
-                  <span className="iconify mdi--close" />
-                </button>
-              ) : (
-                <button type="button" onClick={() => setShowCustomerForm(true)}>
-                  <span className="iconify mdi--plus" />
-                  <span>Customer Baru</span>
-                </button>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="transaction/status" className="w-[12ch]">Status:</Label>
+            <Controller
+              name="status"
+              control={control}
+              rules={{ required: true }}
+              disabled={editable.status === false}
+              render={({ field }) => (
+                <Select {...field}>
+                  <SelectTrigger id="transaction/status" className="flex-grow">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TRANSACTION_STATUSES.map((status) => (
+                      <SelectItem key={status} value={status}>{status}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
-            </fieldset>
-          ) : (
-            <Async<Promise<Awaited<ReturnType<typeof customerApi.get>> | null>>
-              value={typeof values.customerId === 'number' ? customerApi.get(values.customerId) : Promise.resolve(null)}
-              init={null}
-            >
-              {(customer) => (
-                <div className="flex items-center gap-2">
-                  <span>Customer:</span>
-                  <span>{customer?.name ?? 'Not set'}</span>
-                </div>
-              )}
-            </Async>
-          )
-        }
+            />
+          </div>
 
-        <fieldset>
-          <label>
-            Status
-            <select
-              id="transaction/status"
-              required
-              {...register('status', { required: true, disabled: !editable.status })}
-              className="px-3 py-2 border rounded"
-            >
-              {TRANSACTION_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </select>
-          </label>
-        </fieldset>
+          {status === 'pending' && (<>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="transaction/dueDate" className="w-[12ch]">Tenggat Bayar:</Label>
+              <div className="relative flex-grow">
+                <CalendarIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="transaction/dueDate"
+                  type="date"
+                  className="pl-8"
+                  {...register('dueDate', {
+                    valueAsDate: true,
+                    disabled: editable.dueDate === false,
+                    min: new Date().toISOString().split('T')[0],
+                  })}
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label htmlFor="transaction/paid" className="w-[12ch]">Terbayarkan:</Label>
+              <div className="relative flex-grow">
+                <DollarSignIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="transaction/paid"
+                  type="number"
+                  placeholder="0.00"
+                  className="pl-8"
+                  {...register('paid', { valueAsNumber: true, disabled: editable.paid === false })}
+                />
+              </div>
+            </div>
+          </>)}
 
-        {status === 'pending' && (<>
-          <fieldset>
-            <label>
-              Tanggal Jatuh Tempo
-              <input
-                type="date"
-                min={new Date().toISOString().split('T')[0]}
-                {...register('dueDate', {
-                  valueAsDate: true,
-                  disabled: !editable.dueDate,
-                  min: new Date().toISOString().split('T')[0],
-                })}
-                className="p-2 border rounded"
-              />
-            </label>
-          </fieldset>
-
-          <fieldset>
-            <label>
-              Jumlah Bayar
-              <input
-                type="number"
-                min={0}
-                {...register('paid', { valueAsNumber: true, disabled: !editable.paid })}
-                className="p-2 border rounded"
-              />
-            </label>
-          </fieldset>
-        </>)}
-
-        <hr />
-
-        <Async value={products.get} init={[]}>
-          {/* TODO: Resolve product per item independently from products.get() */}
-          {(data) => (
-            <ul>
-              {items.map((item, i) => {
-                const product = data.find((el) => el.id === Number(item.productId))!;
-                const total = product?.variants[item.variant]?.price * item.qty;
-
-                return (
-                  <li key={i}>
-                    {product?.name} <span className="text-gray-500">x{item.qty} {product?.unit}</span> - {priceFormatter.format(total)}
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </Async>
-
-        <hr />
-
-        <div className="text-lg">
-          Total: <span className="text-gray-900 font-bold">
-            <Async value={subtotal} init={0}>
-              {(data, isLoading) => (<>
-                {isLoading ? 'Loading...' : priceFormatter.format(data)}
-              </>)}
-            </Async>
-          </span>
-        </div>
-
-        <div className="flex">
-          <button
+          {/* <button
             type="submit"
-            disabled={isSaving || !(Object.values(touchedFields).some(Boolean)/*  && formState.isValid */)}
+            disabled={isSaving || !(Object.values(touchedFields).some(Boolean) && formState.isValid)}
           >
             <span>{isSaving ? 'Menyimpan...' : 'Simpan'}</span>
-          </button>
+          </button> */}
+        </form>
+
+        <ProductSearchBar />
+
+        <ProductSelector />
+
+        <div className="shrink-0 bg-background border-t p-2">
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center">
+              <ShoppingCartIcon className="mr-2 h-5 w-5" />
+              <span className="font-semibold">{getTotalItems()} items</span>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Total</p>
+              <p className="font-bold">
+                <Async value={subtotal}>
+                  {(value, isLoading) => isLoading ? 'Loading...' : priceFormatter.format(value)}
+                </Async>
+              </p>
+            </div>
+          </div>
+          {status === 'pending' && (
+            <div className="flex justify-between items-center">
+              <p className="text-sm">
+                Terbayar: {priceFormatter.format(partialPayment || 0)}
+              </p>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Belum dibayar</p>
+                <p className="font-bold">
+                  <Async value={getRemainingBalance()}>
+                    {(value, isLoading) => isLoading ? 'Loading...' : priceFormatter.format(value)}
+                  </Async>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
-      </form>
+      </>
+    </FormProvider>
+  );
+}
 
-      {editable.items && (
-        <FormProvider {...formMethods}>
-          <ProductList />
-        </FormProvider>
-      )}
+interface CustomerSelectorProps {
+  trigger?: React.ReactNode;
+  onSelect?: (customer: { id: number; }) => void;
+}
 
-      {showCustomerForm && (
-        <div className="flex flex-col gap-4">
-          <h2 className="text-2xl">
-            Buat Customer Baru
-          </h2>
-          <CustomerForm
-            append={(state) => (
-              <>
-                {Object.entries(state.errors).map(([key, value]) => (
-                  <div key={key} className="text-red-500">{value.message}</div>
+function CustomerSelector({
+  trigger = (<Button type="button">Pilih Kustomer</Button>),
+  onSelect,
+}: CustomerSelectorProps) {
+  const [customerName, setCustomerName] = useState('');
+  const { data: customers } = useQuery(createCustomersQuery());
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        {trigger}
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Pilih atau Buat Kustomer</DialogTitle>
+          <DialogDescription>
+            Pilih kustomer yang sudah ada atau buat kustomer baru.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Tabs defaultValue="select" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="select">Pilih Kustomer</TabsTrigger>
+            <TabsTrigger value="add">Buat Kustomer Baru</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="select">
+            <div className="space-y-4">
+              <Input
+                placeholder="Cari Kustomer..."
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+              />
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {(customers ?? []).filter(c => c.name.toLowerCase().includes(customerName.toLowerCase())).map(customer => (
+                  <DialogClose
+                    key={customer.id}
+                    className="w-full justify-start"
+                  >
+                    <Button
+                      type="submit"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => onSelect?.({ id: customer.id })}
+                    >
+                      {customer.name}
+                    </Button>
+                  </DialogClose>
                 ))}
-                <button
-                  type="button"
-                  onClick={() => setShowCustomerForm(false)}
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  disabled={!state.isValid || state.isSubmitting}
-                >
-                  <span>Simpan</span>
-                </button>
-              </>
-            )}
-          />
-        </div>
-      )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="add">
+            <CustomerForm
+              append={(state) => (
+                <DialogClose asChild>
+                  <Button
+                    type="submit"
+                    disabled={!state.isValid || state.isSubmitting}
+                    className="w-full"
+                  >
+                    <span>Simpan</span>
+                  </Button>
+                </DialogClose>
+              )}
+            />
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function ProductSearchBar() {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTag, setSelectedTag] = useState<string>();
+
+  return (
+    <div className="flex items-center gap-x-2">
+      <div className="relative flex-grow">
+        <SearchIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="search"
+          placeholder="Cari produk..."
+          className="pl-8"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+      <Select
+        defaultValue="all"
+        value={selectedTag}
+        onValueChange={(value) => setSelectedTag(value || undefined)}
+      >
+        <SelectTrigger className="w-[130px]">
+          <SelectValue placeholder="Filter by tag" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Semua tag</SelectItem>
+          {['HCL', 'Keren'].map((tag) => (
+            <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
 
-function ProductList() {
-  const { formState: { defaultValues }, register, control, watch, setValue } = useFormContext<TransactionFieldValues>();
+function ProductSelector() {
+  const { control, formState: { defaultValues }, watch, setValue } = useFormContext<TransactionFieldValues>();
   const { append, remove } = useFieldArray({ control, name: 'items', rules: { required: true, minLength: 1 } });
   const addedItems = watch('items');
 
+  const { data: items } = useQuery(createProductsQuery());
+
   return (
-    <div>
-      <h2 className="text-2xl">
-        Pilih Produk
-      </h2>
-      <table>
-        <tbody>
-          <Async value={products.get} init={[]}>
-            {(data, isLoading) => isLoading
-              ? <tr><td colSpan={3}>Loading...</td></tr>
-              : (<>
-                {data.map((product) => {
-                  const hasVariants = Object.keys(product.variants).length > 1
-                    && !(PRODUCT_VARIANT_NO_VARIANTS.name in product.variants);
-                  const itemIdx = addedItems.findIndex((item) => item.productId === String(product.id));
-                  const namePrefix = `items.${itemIdx}` as const;
-                  const initQty = defaultValues?.items?.[itemIdx]?.qty ?? 0;
-                  const qty: number | undefined = addedItems[itemIdx]?.qty;
-                  const isOutOfStock = qty === undefined
-                    ? product.stock < 1 : (qty - initQty) >= product.stock;
-                  const setQty = (n: number) => {
-                    if (itemIdx !== -1) {
-                      if (n >= 0) setValue(`${namePrefix}.qty`, n, { shouldTouch: true });
-                      if (n < 1) remove(itemIdx);
-                    } else if (n > 0) {
-                      append({ productId: String(product.id), variant: PRODUCT_VARIANT_NO_VARIANTS.name, qty: n });
-                    }
-                  };
+    <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
+      {(items ?? []).map((product) => {
+        const itemIdx = addedItems.findIndex((item) => item.productId === String(product.id));
+        const fieldNamePrefix = `items.${itemIdx}` as const;
+        const initQty = defaultValues?.items?.[itemIdx]?.qty ?? 0;
+        const qty: number | undefined = addedItems[itemIdx]?.qty;
 
-                  return (
-                    <tr
-                      key={product.id}
-                      className="[&:not(:last-child)]:border-b"
-                    >
-                      <td className="p-2 min-w-[20ch]">
-                        <div>{product.name}</div>
-                        <div>
-                          <span className="text-gray-500">Stok: </span>
-                          <b>{product.stock - (qty - initQty)}</b> {product.unit}
-                        </div>
-                      </td>
-                      <td className="p-2 text-gray-500">
-                        {getPriceDisplay(product.variants)}
-                      </td>
-                      <td className="p-2 flex items-center">
-                        {hasVariants
-                          ? (
-                            <div className="text-sm text-gray-500">Variants is not supported currently.</div>
-                          ) : (<>
-                            <button
-                              type="button"
-                              disabled={qty < 1 || qty === undefined}
-                              onClick={() => setQty(qty !== undefined ? qty - 1 : 0)}
-                            >
-                              <span className="iconify mdi--minus" />
-                            </button>
+        const isOutOfStock = qty === undefined
+          ? (product.stock < 1) : (qty - initQty) >= product.stock;
+        const subtotal = product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price * (qty ?? 0);
 
-                            <input
-                              type="number"
-                              defaultValue={0}
-                              min={1}
-                              max={initQty + product.stock}
-                              readOnly={isOutOfStock}
-                              {...(itemIdx !== -1 && register(`${namePrefix}.qty`, {
-                                required: true, valueAsNumber: true, min: 1, max: initQty + product.stock,
-                              }))}
-                              className="p-2 border rounded w-[7ch] font-semibold text-center"
-                            />
+        const setQty = (n: number) => {
+          if (itemIdx !== -1) {
+            if (n >= 0) setValue(`${fieldNamePrefix}.qty`, n, { shouldTouch: true });
+            if (n < 1) remove(itemIdx);
+          } else if (n > 0) {
+            append({ productId: String(product.id), variant: PRODUCT_VARIANT_NO_VARIANTS.name, qty: n });
+          }
+        };
 
-                            <button
-                              type="button"
-                              disabled={isOutOfStock}
-                              onClick={() => setQty(qty !== undefined ? qty + 1 : 1)}
-                            >
-                              <span className="iconify mdi--plus" />
-                            </button>
+        return (
+          <Card key={product.id} className="p-2">
+            <CardContent className="p-0">
+              <div className="flex justify-between items-center mb-1 gap-2">
+                <h2 className="font-semibold">{product.name}</h2>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={!addedItems[itemIdx]?.qty}
+                    onClick={() => setQty(addedItems[itemIdx]?.qty - 1)}
+                  >
+                    <MinusIcon className="h-4 w-4" />
+                  </Button>
+                  <span className="font-medium w-4 text-center">{addedItems[itemIdx]?.qty || 0}</span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={isOutOfStock}
+                    onClick={() => setQty((addedItems[itemIdx]?.qty ?? 0) + 1)}
+                  >
+                    <PlusIcon className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
 
-                            <span>
-                              {product.unit}
-                            </span>
-                          </>)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </>)}
-          </Async>
-        </tbody>
-      </table>
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-1">
+                  <p className="text-sm text-muted-foreground">
+                    {priceFormatter.format(product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price)} | Stock: {product.stock}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap justify-end gap-1">
+                  <p className="text-sm">
+                    {(subtotal > 0) && (
+                      <>
+                        <span className="text-gray-400">= </span>
+                        {priceFormatter.format(subtotal)}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

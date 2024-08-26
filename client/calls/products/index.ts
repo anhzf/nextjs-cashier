@@ -1,6 +1,7 @@
 import type { listProduct } from '@/calls/products';
+import { APP_URL } from '@/constants';
 
-const ENDPOINT = '/api/product/{product}';
+const ENDPOINT = `${APP_URL}/api/product/{product}`;
 
 export const list = async (params?: Record<string, string>): Promise<Awaited<ReturnType<typeof listProduct>>> => {
   const searchParams = new URLSearchParams(params);

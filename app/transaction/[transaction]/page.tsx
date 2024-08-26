@@ -1,5 +1,6 @@
 import { addItemsToTransaction, getTransaction, updateTransaction } from '@/calls/transactions';
 import { TransactionForm, type TransactionFieldValues, type TransactionFormAction } from '@/components/transaction-form';
+import { Button } from '@/components/ui/button';
 import { TRANSACTION_STATUSES } from '@/constants';
 import * as v from 'valibot';
 
@@ -61,19 +62,26 @@ export default async function TransactionViewPage({ params }: PageProps) {
   };
 
   return (
-    <main className="p-4">
-      <h1 className="text-3xl">
-        Transaksi #{data.code ?? transactionId}
-      </h1>
+    <main className="container h-screen flex flex-col gap-6 py-4">
+      <div className="flex justify-between gap-4">
+        <h1 className="text-3xl">
+          Transaksi #{data.code ?? transactionId}
+        </h1>
 
-      <div>
+        <Button type="submit" form={`transaction/${transactionId}`}>
+          Simpan
+        </Button>
+      </div>
+
+      {/* <div>
         Dibuat pada: {data.createdAt.toLocaleString('id')}
       </div>
       <div>
         Diperbarui pada: {data.updatedAt.toLocaleString('id')}
-      </div>
+      </div> */}
 
       <TransactionForm
+        formId={`transaction/${transactionId}`}
         editable={{
           customerId: false,
           status: true,

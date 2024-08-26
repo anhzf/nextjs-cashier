@@ -1,4 +1,7 @@
 import { createCustomer } from '@/calls/customers';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useForm, type FormState, type SubmitHandler } from 'react-hook-form';
 
 interface FieldValues {
@@ -14,9 +17,9 @@ interface CustomerFormProps {
 export function CustomerForm({
   values,
   append = (state: FormState<FieldValues>) => (
-    <button disabled={!state.isValid || state.isSubmitting} type="submit">
+    <Button type="submit" disabled={!state.isValid || state.isSubmitting} className="w-full">
       <span>Simpan</span>
-    </button>
+    </Button>
   )
 }: CustomerFormProps) {
   const { register, formState, handleSubmit, setError } = useForm<FieldValues>({ values });
@@ -30,34 +33,29 @@ export function CustomerForm({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <fieldset>
-        <label>
-          Nama
-          <input
-            type="text"
-            id="customer/name"
-            required
-            {...register('name', { required: true })}
-            className="px-3 py-2 border rounded"
-          />
-        </label>
-      </fieldset>
+    <form className="grid gap-y-4" onSubmit={handleSubmit(onSubmit)}>
+      <div className="grid gap-y-2">
+        <Label htmlFor="customer/name">Name</Label>
+        <Input
+          id="customer/name"
+          {...register('name', { required: true })}
+        />
+      </div>
 
-      <fieldset>
-        <label>
-          No. Kontak
-          <input
-            type="tel"
-            id="customer/phone"
-            required
-            {...register('phone')}
-            className="px-3 py-2 border rounded"
-          />
-        </label>
-      </fieldset>
+      <div className="grid gap-y-2">
+        <Label htmlFor="customer/phone">Phone</Label>
+        <Input
+          id="customer/phone"
+          type="tel"
+          {...register('phone')}
+        />
+      </div>
 
-      <div className="flex">
+      {Object.entries(formState.errors).map(([key, value]) => (
+        <div key={key} className="text-red-500">{value.message}</div>
+      ))}
+
+      <div className="flex gap-2">
         {append(formState)}
       </div>
     </form>

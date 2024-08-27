@@ -2,6 +2,7 @@ import { addItemsToTransaction, getTransaction, updateTransaction } from '@/call
 import { TransactionForm, type TransactionFieldValues, type TransactionFormAction } from '@/components/transaction-form';
 import { Button } from '@/components/ui/button';
 import { TRANSACTION_STATUSES } from '@/constants';
+import { revalidatePath } from 'next/cache';
 import * as v from 'valibot';
 
 interface PageProps {
@@ -11,7 +12,7 @@ interface PageProps {
 }
 
 const createAction = (id: number, before: TransactionFieldValues): TransactionFormAction => (
-  async ({ status, dueDate, items, paid }, before) => {
+  async ({ status, dueDate, items, paid }) => {
     'use server';
 
     // Ensure that we're only updating the fields that have changed
@@ -39,6 +40,8 @@ const createAction = (id: number, before: TransactionFieldValues): TransactionFo
     }
 
     await Promise.all(updates);
+
+    revalidatePath('/');
   }
 );
 
@@ -58,13 +61,13 @@ export default async function TransactionViewPage({ params }: PageProps) {
       qty: item.qty,
     })),
     paid: data.paid,
-    dueDate: data.dueDate || undefined,
+    dueDate: data.dueDate ?? undefined,
   };
 
   return (
-    <main className="container h-screen flex flex-col gap-6 py-4">
-      <div className="flex justify-between gap-4">
-        <h1 className="text-3xl">
+    <main className="container relative h-screen flex flex-col gap-6 p-4">
+      <div className="flex justify-between items-center gap-4">
+        <h1 className="text-2xl font-bold">
           Transaksi #{data.code ?? transactionId}
         </h1>
 

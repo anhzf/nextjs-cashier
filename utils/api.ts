@@ -11,11 +11,13 @@ export const defineApi = <Ctx = HandlerContext>(handler: Handler<Ctx>): Handler<
     try {
       return await handler(req, ctx);
     } catch (error: any) {
+      if (process.env.NODE_ENV === 'development') console.error(error);
+
       if (isClientError(error)) return NextResponse
         .json({ error: error.message }, { status: error.code });
 
       if (isValiError(error)) return NextResponse
-        .json({ error: error.message, details: flatten(error.issues) });
+        .json({ error: error.message, details: flatten(error.issues) }, { status: 400 });
 
       // Keep NextJs internal Error
       if ('digest' in error

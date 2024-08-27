@@ -2,8 +2,7 @@
 /* TODO: Fix form validity state */
 /* TODO: Fix broken select status */
 /* TODO: Prevent form saving when customer form is submitting */
-import { createCustomerQuery, createCustomersQuery, createProductsQuery } from '@/client/queries';
-import { Async } from '@/components/async';
+import { createCustomerQuery, createCustomersQuery, createProductsQuery, createTagsQuery } from '@/client/queries';
 import { CustomerForm } from '@/components/customer-form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -14,10 +13,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PRODUCT_VARIANT_NO_VARIANTS, TRANSACTION_STATUSES } from '@/constants';
 import { cn } from '@/utils/ui';
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { DialogDescription } from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from '@uidotdev/usehooks';
 import { CalendarIcon, DollarSignIcon, MinusIcon, PlusIcon, SearchIcon, ShoppingCartIcon, UserIcon } from 'lucide-react';
-import { useMemo, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, type SubmitHandler } from 'react-hook-form';
 
 export interface TransactionFieldValues {
@@ -46,7 +47,7 @@ const DEFAULT_EDITABLE = {
   paid: true,
 };
 
-export type TransactionFormAction = (values: TransactionFieldValues, before?: TransactionFieldValues) => Promise<void>;
+export type TransactionFormAction = (values: TransactionFieldValues) => Promise<void>;
 
 interface TransactionFormProps extends React.ComponentProps<'div'> {
   formId?: string;
@@ -74,18 +75,22 @@ export function TransactionForm({
   const [messages, setMessages] = useState<{ msg: string; type?: 'positive' | 'negative' }[]>([]);
   const [isSaving, startSaving] = useTransition();
 
-  const { data: products } = useQuery(createProductsQuery());
-  const { data: customer, isLoading: isCustomerLoading } = useQuery(createCustomerQuery(values.customerId ?? NaN));
+  const [productFilterTerm, setProductFilterTerm] = useState<string>();
+  const [productFilterTag, setProductFilterTag] = useState<string>();
 
   const formMethods = useForm<TransactionFieldValues>({ defaultValues: values });
-  const { control, register, watch, handleSubmit } = formMethods;
+  const { control, register, setValue, watch, handleSubmit } = formMethods;
 
+  const customerId = watch('customerId');
   const status = watch('status');
   const partialPayment = watch('paid');
   const items = watch('items');
 
+  const { data: products } = useQuery(createProductsQuery());
+  const { data: customer, isLoading: isCustomerLoading } = useQuery(createCustomerQuery(customerId));
+
   const subtotal = useMemo(
-    async () => {
+    () => {
       const list = products ?? [];
       return items.reduce((acc, item) => {
         const product = list.find((product) => product.id === Number(item.productId))!;
@@ -97,16 +102,20 @@ export function TransactionForm({
 
   const getTotalItems = () => items.reduce((sum, { qty }) => sum + qty, 0);
 
-  const getRemainingBalance = async () => {
-    const total = await subtotal;
+  const getRemainingBalance = () => {
     const paid = partialPayment || 0;
-    return Math.max(total - paid, 0);
+    return Math.max(subtotal - paid, 0);
   };
+
+  const onSearch = useCallback((searchTerm = '', tag = '') => {
+    setProductFilterTerm(searchTerm);
+    if (tag) setProductFilterTag(tag === '$default' ? undefined : tag);
+  }, []);
 
   const onSubmit: SubmitHandler<TransactionFieldValues> = (payload) => {
     startSaving(async () => {
       try {
-        await action?.(payload, values);
+        await action?.(payload);
         setMessages([{ msg: 'Berhasil menyimpan data transaksi.', type: 'positive' }]);
       } catch (err) {
         setMessages([{ msg: String(err), type: 'negative' }]);
@@ -116,138 +125,138 @@ export function TransactionForm({
 
   return (
     <FormProvider {...formMethods}>
-      <>
-        {/* <pre className="whitespace-pre">
-        {JSON.stringify([formMethods.formState.isValid, formMethods.getFieldState('items')], null, 2)}
+      {/* <pre className="whitespace-pre">
+        {JSON.stringify(watch(), null, 2)}
       </pre> */}
 
-        <form
-          id={formId}
-          className="shrink-0 flex flex-col gap-2"
-          onSubmit={handleSubmit(onSubmit)}
-        >
-          {messages.map(({ msg, type }) => (
-            <div
-              key={msg}
-              className={cn({ 'text-green-400': type === 'positive', 'text-red-400': type === 'negative' })}
-            >
-              {msg}
-            </div>
-          ))}
-
-          <div className="flex items-center gap-2">
-            <UserIcon className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">
-              {isCustomerLoading ? 'Loading...' : customer?.name || 'Pilih Kustomer'}
-            </span>
-
-            {editable.customerId === true && (
-              <CustomerSelector
-                trigger={(
-                  <Button variant="outline" size="sm">Ubah</Button>
-                )}
-              />
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Label htmlFor="transaction/status" className="w-[12ch]">Status:</Label>
-            <Controller
-              name="status"
-              control={control}
-              rules={{ required: true }}
-              disabled={editable.status === false}
-              render={({ field }) => (
-                <Select {...field}>
-                  <SelectTrigger id="transaction/status" className="flex-grow">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TRANSACTION_STATUSES.map((status) => (
-                      <SelectItem key={status} value={status}>{status}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-
-          {status === 'pending' && (<>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="transaction/dueDate" className="w-[12ch]">Tenggat Bayar:</Label>
-              <div className="relative flex-grow">
-                <CalendarIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="transaction/dueDate"
-                  type="date"
-                  className="pl-8"
-                  {...register('dueDate', {
-                    valueAsDate: true,
-                    disabled: editable.dueDate === false,
-                    min: new Date().toISOString().split('T')[0],
-                  })}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Label htmlFor="transaction/paid" className="w-[12ch]">Terbayarkan:</Label>
-              <div className="relative flex-grow">
-                <DollarSignIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="transaction/paid"
-                  type="number"
-                  placeholder="0.00"
-                  className="pl-8"
-                  {...register('paid', { valueAsNumber: true, disabled: editable.paid === false })}
-                />
-              </div>
-            </div>
-          </>)}
-
-          {/* <button
-            type="submit"
-            disabled={isSaving || !(Object.values(touchedFields).some(Boolean) && formState.isValid)}
+      <form
+        id={formId}
+        className="shrink-0 flex flex-col gap-2"
+        onSubmit={handleSubmit(onSubmit)}
+      >
+        {messages.map(({ msg, type }) => (
+          <div
+            key={msg}
+            className={cn({ 'text-green-400': type === 'positive', 'text-red-400': type === 'negative' })}
           >
-            <span>{isSaving ? 'Menyimpan...' : 'Simpan'}</span>
-          </button> */}
-        </form>
+            {msg}
+          </div>
+        ))}
 
-        <ProductSearchBar />
+        <CustomerSelector
+          trigger={(
+            <Button type="button" variant="outline" disabled={editable.customerId === false}>
+              <UserIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+              <span className="text-sm font-medium">
+                {isCustomerLoading ? 'Loading...' : customer?.name || 'Pilih Kustomer'}
+              </span>
+            </Button>
+          )}
+          onSelect={({ id }) => setValue('customerId', id)}
+        />
 
-        <ProductSelector />
+        <div className="flex items-center gap-2">
+          <Label htmlFor="transaction/status" className="shrink-0 w-[12ch]">Status:</Label>
+          <Controller
+            name="status"
+            control={control}
+            rules={{ required: true }}
+            disabled={editable.status === false}
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} {...field}>
+                <SelectTrigger id="transaction/status" className="flex-grow">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TRANSACTION_STATUSES.map((status) => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        </div>
 
-        <div className="shrink-0 bg-background border-t p-2">
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center">
-              <ShoppingCartIcon className="mr-2 h-5 w-5" />
-              <span className="font-semibold">{getTotalItems()} items</span>
+        {status === 'pending' && (<>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="transaction/dueDate" className="shrink-0 w-[12ch]">Tenggat Bayar:</Label>
+            <div className="relative flex-grow">
+              <CalendarIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="transaction/dueDate"
+                type="date"
+                className="pl-8"
+                {...register('dueDate', {
+                  valueAsDate: true,
+                  disabled: editable.dueDate === false,
+                  min: new Date().toISOString().split('T')[0],
+                })}
+              />
             </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="transaction/paid" className="shrink-0 w-[12ch]">Terbayarkan:</Label>
+            <div className="relative flex-grow">
+              <DollarSignIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="transaction/paid"
+                type="number"
+                placeholder="0.00"
+                className="pl-8"
+                {...register('paid', { valueAsNumber: true, disabled: editable.paid === false })}
+              />
+            </div>
+          </div>
+        </>)}
+      </form>
+
+      <ProductSearchBar onSearch={onSearch} />
+
+      <ProductSelector
+        tag={productFilterTag}
+        term={productFilterTerm}
+      />
+
+      <div className="shrink-0 bg-background border-t p-2">
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center">
+            <ShoppingCartIcon className="mr-2 h-5 w-5" />
+            <span className="font-semibold">{getTotalItems()} items</span>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-muted-foreground">Total</p>
+            <p className="font-bold">
+              {priceFormatter.format(subtotal)}
+            </p>
+          </div>
+        </div>
+        {status === 'pending' && (
+          <div className="flex justify-between items-center">
+            <p className="text-sm">
+              Terbayar: {priceFormatter.format(partialPayment || 0)}
+            </p>
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Total</p>
+              <p className="text-sm text-muted-foreground">Belum dibayar</p>
               <p className="font-bold">
-                <Async value={subtotal}>
-                  {(value, isLoading) => isLoading ? 'Loading...' : priceFormatter.format(value)}
-                </Async>
+                {priceFormatter.format(getRemainingBalance())}
               </p>
             </div>
           </div>
-          {status === 'pending' && (
-            <div className="flex justify-between items-center">
-              <p className="text-sm">
-                Terbayar: {priceFormatter.format(partialPayment || 0)}
-              </p>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Belum dibayar</p>
-                <p className="font-bold">
-                  <Async value={getRemainingBalance()}>
-                    {(value, isLoading) => isLoading ? 'Loading...' : priceFormatter.format(value)}
-                  </Async>
-                </p>
-              </div>
+        )}
+      </div>
+
+      {isSaving && (
+        <div className="fixed z-50 inset-0 flex flex-col justify-center items-center bg-gray-700/50">
+          <div className="bg-white p-4 rounded shadow-lg
+            backdrop-filter backdrop-blur-sm">
+            <div className="flex justify-center items-center gap-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
+              <p>Menyimpan...</p>
             </div>
-          )}
+            <p className="text-sm text-center text-muted-foreground">Mohon tunggu sebentar</p>
+          </div>
         </div>
-      </>
+      )}
     </FormProvider>
   );
 }
@@ -331,9 +340,21 @@ function CustomerSelector({
   )
 }
 
-function ProductSearchBar() {
+interface ProductSearchBarProps {
+  onSearch?: (searchTerm: string, tag?: string) => void;
+}
+
+function ProductSearchBar({ onSearch }: ProductSearchBarProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>();
+
+  const { data: tags, isFetching: isLoading } = useQuery(createTagsQuery());
+
+  const debouncedTerm = useDebounce(searchTerm, 500);
+
+  useEffect(() => {
+    onSearch?.(debouncedTerm, selectedTag);
+  }, [debouncedTerm, selectedTag, onSearch]);
 
   return (
     <div className="flex items-center gap-x-2">
@@ -348,7 +369,7 @@ function ProductSearchBar() {
         />
       </div>
       <Select
-        defaultValue="all"
+        defaultValue="$default"
         value={selectedTag}
         onValueChange={(value) => setSelectedTag(value || undefined)}
       >
@@ -356,9 +377,17 @@ function ProductSearchBar() {
           <SelectValue placeholder="Filter by tag" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Semua tag</SelectItem>
-          {['HCL', 'Keren'].map((tag) => (
-            <SelectItem key={tag} value={tag}>{tag}</SelectItem>
+          <SelectItem value="$default">
+            {isLoading ? 'Loading...' : 'Semua Tag'}
+          </SelectItem>
+
+          {(tags ?? []).map((tag) => (
+            <SelectItem
+              key={tag.id}
+              value={String(tag.id)}
+            >
+              {tag.name}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -366,84 +395,109 @@ function ProductSearchBar() {
   );
 }
 
-function ProductSelector() {
+interface ProductSelectorProps {
+  tag?: string;
+  term?: string;
+}
+
+function ProductSelector({ tag, term }: ProductSelectorProps) {
   const { control, formState: { defaultValues }, watch, setValue } = useFormContext<TransactionFieldValues>();
-  const { append, remove } = useFieldArray({ control, name: 'items', rules: { required: true, minLength: 1 } });
+  const { append } = useFieldArray({ control, name: 'items', rules: { required: true, minLength: 1 } });
+
+  const [root] = useAutoAnimate<HTMLDivElement>()
+
   const addedItems = watch('items');
 
-  const { data: items } = useQuery(createProductsQuery());
+  const { data: items, isFetching: isLoading } = useQuery(createProductsQuery(tag ? { tag } : {}));
+  const _filterAndSorted = useMemo(() => (items ?? [])
+    .filter((product) => term ? product.name.toLowerCase().includes(term.toLowerCase() ?? '') : true)
+    // Any items that already added and have qty > 0 should be on top
+    .sort((a, b) => {
+      const aIdx = addedItems.findIndex((item) => item.productId === String(a.id));
+      const bIdx = addedItems.findIndex((item) => item.productId === String(b.id));
+      const aQty = addedItems[aIdx]?.qty ?? 0;
+      const bQty = addedItems[bIdx]?.qty ?? 0;
+      return bQty - aQty;
+    }), [items, term, addedItems]);
+  const filterAndSorted = useDebounce(_filterAndSorted, 1000);
 
   return (
-    <div className="flex-1 flex flex-col gap-2 overflow-y-auto">
-      {(items ?? []).map((product) => {
-        const itemIdx = addedItems.findIndex((item) => item.productId === String(product.id));
-        const fieldNamePrefix = `items.${itemIdx}` as const;
-        const initQty = defaultValues?.items?.[itemIdx]?.qty ?? 0;
-        const qty: number | undefined = addedItems[itemIdx]?.qty;
+    <div ref={root} className="flex-1 flex max-h-[70vh] flex-col gap-2 overflow-y-auto">
+      {isLoading
+        ? <div>Loading...</div>
+        : filterAndSorted.map((product) => {
+          const itemIdx = addedItems.findIndex((item) => item.productId === String(product.id));
+          const fieldNamePrefix = `items.${itemIdx}` as const;
+          const initQty = defaultValues?.items?.[itemIdx]?.qty ?? 0;
+          const qty: number | undefined = addedItems[itemIdx]?.qty;
 
-        const isOutOfStock = qty === undefined
-          ? (product.stock < 1) : (qty - initQty) >= product.stock;
-        const subtotal = product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price * (qty ?? 0);
+          const isOutOfStock = qty === undefined
+            ? (product.stock < 1) : (qty - initQty) >= product.stock;
+          const subtotal = product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price * (qty ?? 0);
 
-        const setQty = (n: number) => {
-          if (itemIdx !== -1) {
-            if (n >= 0) setValue(`${fieldNamePrefix}.qty`, n, { shouldTouch: true });
-            if (n < 1) remove(itemIdx);
-          } else if (n > 0) {
-            append({ productId: String(product.id), variant: PRODUCT_VARIANT_NO_VARIANTS.name, qty: n });
-          }
-        };
+          const setQty = (n: number) => {
+            if (itemIdx !== -1) {
+              if (n >= 0) setValue(`${fieldNamePrefix}.qty`, n, { shouldTouch: true });
+              // if (n < 1) remove(itemIdx);
+            } else if (n > 0) {
+              append({ productId: String(product.id), variant: PRODUCT_VARIANT_NO_VARIANTS.name, qty: n });
+            }
+          };
 
-        return (
-          <Card key={product.id} className="p-2">
-            <CardContent className="p-0">
-              <div className="flex justify-between items-center mb-1 gap-2">
-                <h2 className="font-semibold">{product.name}</h2>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    disabled={!addedItems[itemIdx]?.qty}
-                    onClick={() => setQty(addedItems[itemIdx]?.qty - 1)}
-                  >
-                    <MinusIcon className="h-4 w-4" />
-                  </Button>
-                  <span className="font-medium w-4 text-center">{addedItems[itemIdx]?.qty || 0}</span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    disabled={isOutOfStock}
-                    onClick={() => setQty((addedItems[itemIdx]?.qty ?? 0) + 1)}
-                  >
-                    <PlusIcon className="h-4 w-4" />
-                  </Button>
+          // console.log({ name: product.name, qty, initQty, isOutOfStock });
+
+          return (
+            <Card key={product.id} className={cn('p-2', { 'shadow-none': isOutOfStock, 'bg-emerald-50': qty > 0 })}>
+              <CardContent className="p-0">
+                <div className="flex justify-between items-center mb-1 gap-2">
+                  <h2 className={cn('font-semibold', product.stock < 1 ? 'text-gray-500' : 'text-gray-900')}>
+                    {product.name}
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      disabled={!addedItems[itemIdx]?.qty}
+                      onClick={() => setQty(addedItems[itemIdx]?.qty - 1)}
+                    >
+                      <MinusIcon className="h-4 w-4" />
+                    </Button>
+                    <span className="font-medium w-4 text-center">{addedItems[itemIdx]?.qty || 0}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8"
+                      disabled={isOutOfStock}
+                      onClick={() => setQty((addedItems[itemIdx]?.qty ?? 0) + 1)}
+                    >
+                      <PlusIcon className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-1">
-                  <p className="text-sm text-muted-foreground">
-                    {priceFormatter.format(product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price)} | Stock: {product.stock}
-                  </p>
-                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-1">
+                    <p className="text-sm text-muted-foreground">
+                      {priceFormatter.format(product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price)} | Stock: {product.stock}
+                    </p>
+                  </div>
 
-                <div className="flex flex-wrap justify-end gap-1">
-                  <p className="text-sm">
-                    {(subtotal > 0) && (
-                      <>
-                        <span className="text-gray-400">= </span>
-                        {priceFormatter.format(subtotal)}
-                      </>
-                    )}
-                  </p>
+                  <div className="flex flex-wrap justify-end gap-1">
+                    <p className="text-sm">
+                      {(subtotal > 0) && (
+                        <>
+                          <span className="text-gray-400">= </span>
+                          <span className="text-gray-600">{priceFormatter.format(subtotal)}</span>
+                        </>
+                      )}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+              </CardContent>
+            </Card>
+          );
+        })}
     </div>
   );
 }

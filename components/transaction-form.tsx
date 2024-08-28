@@ -4,6 +4,7 @@
 /* TODO: Prevent form saving when customer form is submitting */
 import { createCustomerQuery, createCustomersQuery, createProductsQuery, createTagsQuery } from '@/client/queries';
 import { CustomerForm } from '@/components/customer-form';
+import { LoadingOverlay } from '@/components/loading-overlay';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -39,12 +40,24 @@ const INITIAL_VALUES: TransactionFieldValues = {
   paid: 0,
 };
 
-const DEFAULT_EDITABLE = {
+type FieldOption = 'readonly' | boolean;
+
+interface FieldOptions {
+  status?: FieldOption;
+  customer?: FieldOption;
+  items?: FieldOption;
+  dueDate?: FieldOption;
+  paid?: FieldOption;
+  summary?: FieldOption;
+}
+
+const DEFAULT_FIELDS: Required<FieldOptions> = {
   status: true,
-  customerId: true,
+  customer: true,
   items: true,
   dueDate: true,
   paid: true,
+  summary: true,
 };
 
 export type TransactionFormAction = (values: TransactionFieldValues) => Promise<void>;
@@ -53,7 +66,8 @@ interface TransactionFormProps extends React.ComponentProps<'div'> {
   formId?: string;
   values?: TransactionFieldValues;
   action?: TransactionFormAction;
-  editable?: Partial<typeof DEFAULT_EDITABLE>;
+  stocking?: boolean;
+  fields?: FieldOptions;
 }
 
 const priceFormatter = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 });
@@ -66,11 +80,12 @@ export function TransactionForm({
   formId,
   values = INITIAL_VALUES,
   action,
-  editable: _editable,
+  fields: _fields,
+  stocking,
   className,
   ...props
 }: TransactionFormProps) {
-  const editable = useMemo(() => ({ ...DEFAULT_EDITABLE, ..._editable }), [_editable]);
+  const fields = useMemo(() => ({ ...DEFAULT_FIELDS, ..._fields }), [_fields]);
 
   const [messages, setMessages] = useState<{ msg: string; type?: 'positive' | 'negative' }[]>([]);
   const [isSaving, startSaving] = useTransition();
@@ -124,140 +139,150 @@ export function TransactionForm({
   };
 
   return (
-    <FormProvider {...formMethods}>
-      {/* <pre className="whitespace-pre">
+    <div className="flex flex-col gap-4 p-4">
+      <FormProvider {...formMethods}>
+        {/* <pre className="whitespace-pre">
         {JSON.stringify(watch(), null, 2)}
       </pre> */}
 
-      <form
-        id={formId}
-        className="shrink-0 flex flex-col gap-2"
-        onSubmit={handleSubmit(onSubmit)}
-      >
-        {messages.map(({ msg, type }) => (
-          <div
-            key={msg}
-            className={cn({ 'text-green-400': type === 'positive', 'text-red-400': type === 'negative' })}
-          >
-            {msg}
-          </div>
-        ))}
+        <form
+          id={formId}
+          className="shrink-0 flex flex-col gap-2"
+          onSubmit={handleSubmit(onSubmit)}
+        >
+          {messages.map(({ msg, type }) => (
+            <div
+              key={msg}
+              className={cn({ 'text-green-400': type === 'positive', 'text-red-400': type === 'negative' })}
+            >
+              {msg}
+            </div>
+          ))}
 
-        <CustomerSelector
-          trigger={(
-            <Button type="button" variant="outline" disabled={editable.customerId === false}>
+          {fields.customer === 'readonly' && (
+            <Button type="button" variant="outline">
               <UserIcon className="h-4 w-4 mr-2 text-muted-foreground" />
               <span className="text-sm font-medium">
                 {isCustomerLoading ? 'Loading...' : customer?.name || 'Pilih Kustomer'}
               </span>
             </Button>
           )}
-          onSelect={({ id }) => setValue('customerId', id)}
+
+          {fields.customer === true && (
+            <CustomerSelector
+              trigger={(
+                <Button type="button" variant="outline">
+                  <UserIcon className="h-4 w-4 mr-2 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    {isCustomerLoading ? 'Loading...' : customer?.name || 'Pilih Kustomer'}
+                  </span>
+                </Button>
+              )}
+              onSelect={({ id }) => setValue('customerId', id)}
+            />
+          )}
+
+          {fields.status !== false && (
+            <div className="flex items-center gap-2">
+              <Label htmlFor="transaction/status" className="shrink-0 w-[12ch]">Status:</Label>
+              <Controller
+                name="status"
+                control={control}
+                rules={{ required: true }}
+                render={({ field }) => (
+                  <Select onValueChange={fields.status !== 'readonly' ? field.onChange : undefined} {...field}>
+                    <SelectTrigger id="transaction/status" className="flex-grow">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {TRANSACTION_STATUSES.map((status) => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          )}
+
+          {status === 'pending' && (<>
+            {fields.dueDate !== false && (
+              <div className="flex items-center gap-2">
+                <Label htmlFor="transaction/dueDate" className="shrink-0 w-[12ch]">Tenggat Bayar:</Label>
+                <div className="relative flex-grow">
+                  <CalendarIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="transaction/dueDate"
+                    type="date"
+                    className="pl-8"
+                    {...register('dueDate', {
+                      valueAsDate: true,
+                      disabled: fields.dueDate === 'readonly',
+                      min: new Date().toISOString().split('T')[0],
+                    })}
+                  />
+                </div>
+              </div>
+            )}
+            {fields.paid !== false && (
+              <div className="flex items-center gap-2">
+                <Label htmlFor="transaction/paid" className="shrink-0 w-[12ch]">Terbayarkan:</Label>
+                <div className="relative flex-grow">
+                  <DollarSignIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="transaction/paid"
+                    type="number"
+                    placeholder="0.00"
+                    className="pl-8"
+                    {...register('paid', { valueAsNumber: true, disabled: fields.paid === 'readonly' })}
+                  />
+                </div>
+              </div>
+            )}
+          </>)}
+        </form>
+
+        <ProductSearchBar onSearch={onSearch} />
+
+        <ProductSelector
+          tag={productFilterTag}
+          term={productFilterTerm}
+          stocking={stocking}
         />
 
-        <div className="flex items-center gap-2">
-          <Label htmlFor="transaction/status" className="shrink-0 w-[12ch]">Status:</Label>
-          <Controller
-            name="status"
-            control={control}
-            rules={{ required: true }}
-            disabled={editable.status === false}
-            render={({ field }) => (
-              <Select onValueChange={field.onChange} {...field}>
-                <SelectTrigger id="transaction/status" className="flex-grow">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TRANSACTION_STATUSES.map((status) => (
-                    <SelectItem key={status} value={status}>{status}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {fields.summary === true && (
+          <div className="shrink-0 bg-background border-t p-2">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center">
+                <ShoppingCartIcon className="mr-2 h-5 w-5" />
+                <span className="font-semibold">{getTotalItems()} items</span>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="font-bold">
+                  {priceFormatter.format(subtotal)}
+                </p>
+              </div>
+            </div>
+            {status === 'pending' && (
+              <div className="flex justify-between items-center">
+                <p className="text-sm">
+                  Terbayar: {priceFormatter.format(partialPayment || 0)}
+                </p>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Belum dibayar</p>
+                  <p className="font-bold">
+                    {priceFormatter.format(getRemainingBalance())}
+                  </p>
+                </div>
+              </div>
             )}
-          />
-        </div>
-
-        {status === 'pending' && (<>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="transaction/dueDate" className="shrink-0 w-[12ch]">Tenggat Bayar:</Label>
-            <div className="relative flex-grow">
-              <CalendarIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="transaction/dueDate"
-                type="date"
-                className="pl-8"
-                {...register('dueDate', {
-                  valueAsDate: true,
-                  disabled: editable.dueDate === false,
-                  min: new Date().toISOString().split('T')[0],
-                })}
-              />
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Label htmlFor="transaction/paid" className="shrink-0 w-[12ch]">Terbayarkan:</Label>
-            <div className="relative flex-grow">
-              <DollarSignIcon className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="transaction/paid"
-                type="number"
-                placeholder="0.00"
-                className="pl-8"
-                {...register('paid', { valueAsNumber: true, disabled: editable.paid === false })}
-              />
-            </div>
-          </div>
-        </>)}
-      </form>
-
-      <ProductSearchBar onSearch={onSearch} />
-
-      <ProductSelector
-        tag={productFilterTag}
-        term={productFilterTerm}
-      />
-
-      <div className="shrink-0 bg-background border-t p-2">
-        <div className="flex justify-between items-center mb-2">
-          <div className="flex items-center">
-            <ShoppingCartIcon className="mr-2 h-5 w-5" />
-            <span className="font-semibold">{getTotalItems()} items</span>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Total</p>
-            <p className="font-bold">
-              {priceFormatter.format(subtotal)}
-            </p>
-          </div>
-        </div>
-        {status === 'pending' && (
-          <div className="flex justify-between items-center">
-            <p className="text-sm">
-              Terbayar: {priceFormatter.format(partialPayment || 0)}
-            </p>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Belum dibayar</p>
-              <p className="font-bold">
-                {priceFormatter.format(getRemainingBalance())}
-              </p>
-            </div>
           </div>
         )}
-      </div>
 
-      {isSaving && (
-        <div className="fixed z-50 inset-0 flex flex-col justify-center items-center bg-gray-700/50">
-          <div className="bg-white p-4 rounded shadow-lg
-            backdrop-filter backdrop-blur-sm">
-            <div className="flex justify-center items-center gap-2">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
-              <p>Menyimpan...</p>
-            </div>
-            <p className="text-sm text-center text-muted-foreground">Mohon tunggu sebentar</p>
-          </div>
-        </div>
-      )}
-    </FormProvider>
+        {isSaving && <LoadingOverlay title="Menyimpan..." message="Mohon tunggu sebentar" fixed />}
+      </FormProvider>
+    </div>
   );
 }
 
@@ -398,9 +423,10 @@ function ProductSearchBar({ onSearch }: ProductSearchBarProps) {
 interface ProductSelectorProps {
   tag?: string;
   term?: string;
+  stocking?: boolean;
 }
 
-function ProductSelector({ tag, term }: ProductSelectorProps) {
+function ProductSelector({ tag, term, stocking }: ProductSelectorProps) {
   const { control, formState: { defaultValues }, watch, setValue } = useFormContext<TransactionFieldValues>();
   const { append } = useFieldArray({ control, name: 'items', rules: { required: true, minLength: 1 } });
 
@@ -422,7 +448,7 @@ function ProductSelector({ tag, term }: ProductSelectorProps) {
   const filterAndSorted = useDebounce(_filterAndSorted, 1000);
 
   return (
-    <div ref={root} className="flex-1 flex max-h-[70vh] flex-col gap-2 overflow-y-auto">
+    <div ref={root} className="flex-1 relative flex max-h-[70vh] flex-col gap-2 overflow-y-auto">
       {isLoading
         ? <div>Loading...</div>
         : filterAndSorted.map((product) => {
@@ -431,45 +457,58 @@ function ProductSelector({ tag, term }: ProductSelectorProps) {
           const initQty = defaultValues?.items?.[itemIdx]?.qty ?? 0;
           const qty: number | undefined = addedItems[itemIdx]?.qty;
 
-          const isOutOfStock = qty === undefined
-            ? (product.stock < 1) : (qty - initQty) >= product.stock;
+          const finalStock = product.stock - ((stocking === true ? -(qty ?? 0) : (qty ?? 0)) - initQty);
+          const isOutOfStock = finalStock < 1;
           const subtotal = product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price * (qty ?? 0);
 
           const setQty = (n: number) => {
             if (itemIdx !== -1) {
-              if (n >= 0) setValue(`${fieldNamePrefix}.qty`, n, { shouldTouch: true });
-              // if (n < 1) remove(itemIdx);
+              setValue(`${fieldNamePrefix}.qty`, n, { shouldTouch: true });
             } else if (n > 0) {
               append({ productId: String(product.id), variant: PRODUCT_VARIANT_NO_VARIANTS.name, qty: n });
             }
           };
 
-          // console.log({ name: product.name, qty, initQty, isOutOfStock });
-
           return (
-            <Card key={product.id} className={cn('p-2', { 'shadow-none': isOutOfStock, 'bg-emerald-50': qty > 0 })}>
+            <Card
+              key={product.id}
+              className={cn('p-2', {
+                'shadow-none': stocking !== true && isOutOfStock,
+                'bg-blue-50': qty > 0,
+              })}
+            >
               <CardContent className="p-0">
                 <div className="flex justify-between items-center mb-1 gap-2">
-                  <h2 className={cn('font-semibold', product.stock < 1 ? 'text-gray-500' : 'text-gray-900')}>
+                  <h2 className={cn(
+                    'font-semibold',
+                    qty > 0
+                      ? 'text-blue-500'
+                      : stocking !== true && isOutOfStock ? 'text-gray-500' : 'text-gray-900',
+                  )}>
                     {product.name}
                   </h2>
-                  <div className="flex items-center gap-2">
+                  <div className="flex justify-end items-center gap-2">
+                    {(qty > 0 || stocking === true) && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setQty(qty - 1)}
+                      >
+                        <MinusIcon className="h-4 w-4" />
+                      </Button>
+                    )}
+
+                    <span className="font-medium w-4 text-center">
+                      {qty ?? 0}
+                    </span>
+
                     <Button
                       variant="outline"
                       size="icon"
                       className="h-8 w-8"
-                      disabled={!addedItems[itemIdx]?.qty}
-                      onClick={() => setQty(addedItems[itemIdx]?.qty - 1)}
-                    >
-                      <MinusIcon className="h-4 w-4" />
-                    </Button>
-                    <span className="font-medium w-4 text-center">{addedItems[itemIdx]?.qty || 0}</span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="h-8 w-8"
-                      disabled={isOutOfStock}
-                      onClick={() => setQty((addedItems[itemIdx]?.qty ?? 0) + 1)}
+                      disabled={stocking !== true && isOutOfStock}
+                      onClick={() => setQty((qty ?? 0) + 1)}
                     >
                       <PlusIcon className="h-4 w-4" />
                     </Button>
@@ -479,7 +518,7 @@ function ProductSelector({ tag, term }: ProductSelectorProps) {
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-1">
                     <p className="text-sm text-muted-foreground">
-                      {priceFormatter.format(product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price)} | Stock: {product.stock}
+                      {priceFormatter.format(product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price)} | Stock: <span className={cn({ 'text-red-500': isOutOfStock })}>{finalStock}</span>
                     </p>
                   </div>
 

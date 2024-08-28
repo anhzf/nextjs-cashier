@@ -46,8 +46,8 @@ const action: TransactionFormAction = async (values) => {
 
 export default async function TransactionNewPage() {
   return (
-    <main className="container relative h-screen flex flex-col gap-4 p-4">
-      <div className="flex justify-between items-center gap-4">
+    <main className="container relative h-screen flex flex-col p-0">
+      <div className="flex justify-between items-center gap-4 p-4">
         <h1 className="text-2xl font-bold">
           Buat transaksi baru
         </h1>

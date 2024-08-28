@@ -2,6 +2,7 @@ import { createProduct } from '@/calls/products';
 import { ProductForm, type ProductFormAction } from '@/components/product-form';
 import { PRODUCT_VARIANT_NO_VARIANTS } from '@/constants';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 
 const lempar = (msg: string) => {
   throw new Error(msg);
@@ -28,6 +29,7 @@ const action: ProductFormAction = async (payload) => {
   });
 
   revalidatePath('/product');
+  redirect('/product');
 };
 
 export default function ProductNewPage() {

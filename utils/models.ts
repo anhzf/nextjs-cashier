@@ -21,3 +21,7 @@ export const getPriceDisplay = (productVariants: typeof products.$inferSelect.va
     ? priceFormatter.format(min)
     : `${priceFormatter.format(min)} - ${priceFormatter.format(max)}`;
 };
+
+export const getTransactionDisplayName = (transaction: { createdAt: Date; customer?: { name: string } }) => {
+  return `${transaction.customer?.name ?? 'Tanpa Nama'} (${transaction.createdAt.toLocaleString('id')})`;
+};

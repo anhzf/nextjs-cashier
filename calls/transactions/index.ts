@@ -221,7 +221,7 @@ const _updateItemsInTransaction = async ({ id, items, isStocking = false }: Upda
       const { name, stock } = priceReferences.find((product) => product.id === item.productId)!;
       const stockDelta = isStocking ? (item.qty ?? 1) : -(item.qty ?? 1);
       const finalStock = stock + stockDelta;
-      // console.log({ isStocking, stock, stockDelta, finalStock });
+      console.log({ name, isStocking, stock, stockDelta, finalStock });
       if (finalStock < 0) throw new Error(`Insufficient stock for product ${name} [${item.productId}]`);
 
       return _.update(products)
@@ -234,7 +234,7 @@ const _updateItemsInTransaction = async ({ id, items, isStocking = false }: Upda
       const qtyDiff = (item.qty ?? 1) - before.qty;
       const stockDelta = isStocking ? qtyDiff : -qtyDiff;
       const finalStock = stock + stockDelta;
-      // console.log({ isStocking, before: before.qty, setTo: item.qty ?? 1, stock, stockDelta, finalStock });
+      console.log({ name, isStocking, before: before.qty, setTo: item.qty ?? 1, stock, stockDelta, finalStock });
       if (finalStock < 0) throw new Error(`Insufficient stock for product ${name} [${item.productId}]`);
 
       return _.update(products)

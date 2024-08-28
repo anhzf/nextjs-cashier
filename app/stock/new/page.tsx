@@ -1,6 +1,7 @@
 import { auth } from '@/auth';
 import { createTransaction } from '@/calls/transactions';
 import { TransactionForm, type TransactionFormAction } from '@/components/transaction-form';
+import { Button } from '@/components/ui/button';
 import { ROUTE_SESSION_FAILED } from '@/constants';
 import { redirect } from 'next/navigation';
 import * as v from 'valibot';
@@ -38,17 +39,27 @@ const action: TransactionFormAction = async (values) => {
 
 export default async function StockNewPage() {
   return (
-    <main className="p-4">
-      <h1 className="text-3xl">
-        Tambah stok barang
-      </h1>
+    <main className="container relative h-screen flex flex-col p-0">
+      <div className="flex justify-between items-center gap-4 p-4">
+        <h1 className="text-2xl font-bold">
+          Tambah Stok
+        </h1>
+
+        <Button type="submit" form="stock/new">
+          Simpan
+        </Button>
+      </div>
 
       <TransactionForm
+        formId="stock/new"
         action={action}
-        editable={{
-          customerId: false,
+        stocking
+        fields={{
+          customer: false,
           status: false,
           dueDate: false,
+          paid: false,
+          summary: false,
         }}
       />
     </main>

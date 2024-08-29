@@ -4,10 +4,11 @@ import SessionStates from '@/components/session-states';
 import { cn } from '@/utils/ui';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { createContext, useContext, useId, useState, type Dispatch, type MouseEventHandler, type SetStateAction } from 'react';
+import { createContext, useContext, useState, type Dispatch, type MouseEventHandler, type SetStateAction } from 'react';
 
 const MENU = [
   { href: '/', label: 'Dasbor' },
+  { href: '/transaction', label: 'Transaksi' },
   { href: '/product', label: 'Produk' },
 ];
 

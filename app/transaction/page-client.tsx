@@ -14,7 +14,7 @@ interface PageProps {
 }
 
 // With this convention, it enables to use client states even using async server components.
-export function HomePageClient(props: PageProps) {
+export function TransactionListPageClient(props: PageProps) {
   const appDrawer = useContext(AppDrawerContext);
 
   return (

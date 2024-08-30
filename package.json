@@ -10,10 +10,13 @@
   },
   "dependencies": {
     "@formkit/auto-animate": "^0.8.2",
+    "@hookform/resolvers": "^3.9.0",
     "@iconify-json/mdi": "^1.1.68",
     "@iconify/tailwind": "^1.1.2",
+    "@radix-ui/react-checkbox": "^1.1.1",
     "@radix-ui/react-dialog": "^1.1.1",
     "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-popover": "^1.1.1",
     "@radix-ui/react-select": "^2.1.1",
     "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.0",
@@ -23,6 +26,7 @@
     "bcrypt": "^5.1.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
+    "cmdk": "^1.0.0",
     "drizzle-orm": "^0.33.0",
     "just-diff": "^6.0.2",
     "lucide-react": "^0.436.0",
@@ -30,10 +34,11 @@
     "next-auth": "^5.0.0-beta.20",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-hook-form": "^7.52.2",
+    "react-hook-form": "^7.53.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
-    "valibot": "^0.37.0"
+    "valibot": "^0.37.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

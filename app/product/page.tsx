@@ -1,9 +1,13 @@
 import { listProduct } from '@/calls/products';
 import { LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY } from '@/calls/products/constants';
 import { listTag } from '@/calls/tags';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { getPriceDisplay } from '@/utils/models';
 import { cn } from '@/utils/ui';
 import { BooleanQuerySchema, NumberQuerySchema } from '@/utils/validation';
+import { EyeOffIcon, PencilIcon, PlusCircleIcon } from 'lucide-react';
 import Link from 'next/link';
 import * as v from 'valibot';
 
@@ -31,89 +35,122 @@ export default async function ProductPage({ searchParams }: PageProps) {
   ]);
 
   return (
-    <main className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold">Produk</h1>
+    <main className="container flex flex-col gap-4 py-4">
+      <div className="flex justify-between">
+        <h1 className="text-2xl font-bold">Produk</h1>
 
-      <div className="flex items-center">
-        <Link
-          href={{ query: { ...searchParams, showHidden: !query.showHidden } }}
-          className="btn"
-        >
-          <span className={cn('iconify', query.showHidden ? 'mdi--checkbox-marked' : 'mdi--checkbox-blank')} />
-          <span>Produk tersembunyi</span>
-        </Link>
-
-        <Link href="/product/new" className="btn">
-          <span className="iconify mdi--plus" />
-          <span>Produk Baru</span>
-        </Link>
+        <div className="flex items-center">
+          <Button asChild>
+            <Link href="/product/new">
+              <PlusCircleIcon className="mr-2 size-4" />
+              Produk Baru
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      <div className="flex">
-        {availableTags.map((tag) => (
-          <Link
-            key={tag.id}
-            href={{ query: { ...searchParams, tag: tag.id } }}
-            className={cn(
-              'inline-flex px-2.5 has-[.iconify:first-child]:pl-1.5 has-[.iconify:last-child]:pr-1.5 py-0.5 bg-gray-100 hover:bg-gray-200/80 active:bg-gray-200 justify-center items-center gap-1.5 text-gray-500 rounded-full',
-              query.tag === tag.id && 'text-gray-700'
-            )}
-          >
-
-            {query.tag === tag.id && <span className="iconify mdi--check" />}
-            <span>{tag.name}</span>
+      <div className="flex gap-4">
+        <Button asChild variant="ghost">
+          <Link href={{ query: { ...searchParams, showHidden: !query.showHidden } }}>
+            <span className={cn('iconify mr-2', query.showHidden ? 'mdi--checkbox-marked-outline' : 'mdi--checkbox-blank-outline')} />
+            <span>Produk tersembunyi</span>
           </Link>
-        ))}
+        </Button>
 
-        {query.tag && (
-          <Link
-            href={{ query: { ...searchParams, tag: undefined } }}
-            className={cn(
-              'inline-flex px-2.5 has-[.iconify:first-child]:pl-1.5 has-[.iconify:last-child]:pr-1.5 py-0.5 hover:bg-gray-100/80 active:bg-gray-100 justify-center items-center gap-1.5 text-gray-500 rounded-full',
-            )}
-          >
-
-            <span className="iconify mdi--close" />
-            <span>Hapus tag</span>
-          </Link>
-        )}
-      </div>
-
-      <table>
-        <tbody>
-          {products.map((product) => (
-            <tr key={product.id}>
-              <td className="p-2 w-[32ch]">
-                {product.isHidden && (
-                  <small className="bg-gray-100 px-1.5 py-0.5 text-gray-500 rounded-lg">Disembunyikan</small>
+        <div className="flex items-center gap-2">
+          {availableTags.map((tag) => (
+            <Badge
+              key={tag.id}
+              variant="secondary"
+            >
+              <Link
+                href={{ query: { ...searchParams, tag: tag.id } }}
+                className={cn(
+                  'inline-flex justify-center items-center gap-1.5',
                 )}
-                {product.name}
-              </td>
-              <td className="p-2 text-gray-500">
-                {getPriceDisplay(product.variants)}
-              </td>
-              <td>
-                {product.tags.map(({ tag }) => (
-                  <span
-                    key={tag.id}
-                    className="inline-flex justify-center items-center px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full"
-                  >
-                    {tag.name}
-                  </span>
-                ))}
-              </td>
-              <td className="w-[8ch]">
-                {product.stock} {product.unit}
-              </td>
-              <td className="p-2">
-                <Link href={`/product/${product.id}`} className="btn">
-                  <span className="iconify mdi--pencil" />
-                </Link>
-              </td>
-            </tr>
+              >
+                {query.tag === tag.id && <span className="iconify mdi--check" />}
+                <span>{tag.name}</span>
+              </Link>
+            </Badge>
           ))}
-        </tbody>
-      </table>
+
+          {query.tag && (
+            <Link href={{ query: { ...searchParams, tag: undefined } }}>
+              <Badge variant="outline">
+                <span className="iconify mdi--close" />
+                <span>Hapus tag</span>
+              </Badge>
+            </Link>
+          )}
+        </div>
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[40%]">
+              Nama
+            </TableHead>
+            <TableHead>
+              Harga
+            </TableHead>
+            <TableHead>
+              Stok
+            </TableHead>
+            <TableHead className="text-right">
+              ...
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+
+        <TableBody>
+          {products.map((product) => (
+            <TableRow key={product.id}>
+              <TableCell className="p-2 w-[32ch]">
+                <div className={`font-medium flex items-center gap-2 ${product.isHidden ? "text-muted-foreground" : ""}`}>
+                  {product.name}
+                  {product.isHidden && (
+                    <EyeOffIcon className="h-4 w-4" aria-label="Hidden product" />
+                  )}
+                </div>
+
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {product.tags.map(({ tag }) => (
+                    <Badge
+                      key={tag.id}
+                      variant={product.isHidden ? "outline" : "secondary"}
+                      className={product.isHidden ? "text-muted-foreground" : ""}
+                    >
+                      {tag.name}
+                    </Badge>
+                  ))}
+                </div>
+              </TableCell>
+
+              <TableCell className="p-2 text-gray-500">
+                {getPriceDisplay(product.variants)}
+              </TableCell>
+
+              <TableCell className="w-[8ch]">
+                {product.stock} {product.unit}
+              </TableCell>
+
+              <TableCell className="text-right p-2">
+                <Button
+                  asChild
+                  variant="ghost"
+                  size="icon"
+                >
+                  <Link href={`/product/${product.id}`} className="btn">
+                    <PencilIcon className="size-4" />
+                  </Link>
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </main>
   );
 }

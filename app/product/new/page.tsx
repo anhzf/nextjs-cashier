@@ -33,7 +33,7 @@ export default function ProductNewPage() {
   return (
     <main className="container relative h-screen flex flex-col p-0">
       <div className="flex items-center gap-4 p-4">
-        <Button asChild variant="ghost" size="icon">
+        <Button asChild variant="ghost" size="icon" className="shrink-0">
           <Link href="/product">
             <ArrowLeftIcon className="w-6 h-6" />
           </Link>

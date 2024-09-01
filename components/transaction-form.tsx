@@ -430,7 +430,7 @@ function ProductSelector({ tag, term, stocking }: ProductSelectorProps) {
   const { control, formState: { defaultValues }, watch, setValue } = useFormContext<TransactionFieldValues>();
   const { append } = useFieldArray({ control, name: 'items', rules: { required: true, minLength: 1 } });
 
-  const [root] = useAutoAnimate<HTMLDivElement>()
+  const [root] = useAutoAnimate<HTMLDivElement>();
 
   const addedItems = watch('items');
 

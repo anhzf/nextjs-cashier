@@ -1,9 +1,12 @@
 import { auth } from '@/auth';
 import { createTransaction } from '@/calls/transactions';
+import { AppBar } from '@/components/app-bar';
 import { TransactionForm, type TransactionFormAction } from '@/components/transaction-form';
 import { Button } from '@/components/ui/button';
 import { ROUTE_SESSION_FAILED, TRANSACTION_STATUSES } from '@/constants';
+import { ArrowLeftIcon } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import * as v from 'valibot';
 
@@ -46,22 +49,32 @@ const action: TransactionFormAction = async (values) => {
 
 export default async function TransactionNewPage() {
   return (
-    <main className="container relative h-screen flex flex-col p-0">
-      <div className="flex justify-between items-center gap-4 p-4">
-        <h1 className="text-2xl font-bold">
-          Buat transaksi baru
-        </h1>
+    <div className="relative h-screen flex flex-col">
+      <AppBar showMenu={false}>
+        <div className="grow flex items-center gap-4">
+          <Button asChild variant="ghost" size="icon" className="shrink-0">
+            <Link href="/transaction">
+              <ArrowLeftIcon className="w-6 h-6" />
+            </Link>
+          </Button>
+
+          <h1 className="text-xl font-bold">
+            Transaksi Baru
+          </h1>
+        </div>
 
         <Button type="submit" form="transaction/new">
           Simpan
         </Button>
-      </div>
+      </AppBar>
 
-      <TransactionForm
-        formId="transaction/new"
-        action={action}
-        className="flex-1"
-      />
-    </main>
+      <main className="container relative flex flex-col p-0">
+        <TransactionForm
+          formId="transaction/new"
+          action={action}
+          className="flex-1"
+        />
+      </main>
+    </div>
   );
 }

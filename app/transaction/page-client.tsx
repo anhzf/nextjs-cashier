@@ -1,11 +1,8 @@
 'use client';
 
-import { AppDrawerContext } from '@/components/app-drawer';
-import { Button } from '@/components/ui/button';
 import type { transactions } from '@/db/schema';
 import { getTransactionDisplayName } from '@/utils/models';
 import Link from 'next/link';
-import { useContext } from 'react';
 
 type Transaction = typeof transactions.$inferSelect;
 
@@ -15,29 +12,10 @@ interface PageProps {
 
 // With this convention, it enables to use client states even using async server components.
 export function TransactionListPageClient(props: PageProps) {
-  const appDrawer = useContext(AppDrawerContext);
-
   return (
-    <>
-      <div className="flex gap-4">
-        <Button>
-          <span className="iconify mdi--menu" onClick={() => appDrawer?.setIsOpen(true)} />
-        </Button>
-
-        <TransactionListView data={props.transactions} />
-
-        <div className="flex flex-col">
-          <Link href="/transaction/new" className="btn">
-            <span className="iconify mdi--plus" />
-            <span>Transaksi Baru</span>
-          </Link>
-          <Link href="/stock/new" className="btn">
-            <span className="iconify mdi--plus" />
-            <span>Tambah Stok</span>
-          </Link>
-        </div>
-      </div>
-    </>
+    <div className="flex gap-4">
+      <TransactionListView data={props.transactions} />
+    </div>
   );
 }
 

@@ -189,6 +189,7 @@ export function TransactionForm({
                 name="status"
                 control={control}
                 rules={{ required: true }}
+                disabled={fields.status === 'readonly'}
                 render={({ field }) => (
                   <Select onValueChange={fields.status !== 'readonly' ? field.onChange : undefined} {...field}>
                     <SelectTrigger id="transaction/status" className="flex-grow">

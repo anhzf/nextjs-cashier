@@ -1,7 +1,13 @@
+import { AppBar } from '@/components/app-bar';
+
 export default async function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center p-24">
-      Welcome!
-    </main>
+    <div className="relative h-screen flex flex-col">
+      <AppBar className="lg:hidden" />
+
+      <main className="container relative flex flex-col p-0">
+        Welcome!
+      </main>
+    </div>
   );
 }

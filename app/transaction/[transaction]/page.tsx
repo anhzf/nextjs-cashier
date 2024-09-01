@@ -1,4 +1,5 @@
 import { addItemsToTransaction, getTransaction, updateTransaction } from '@/calls/transactions';
+import { AppBar } from '@/components/app-bar';
 import { TransactionForm, type TransactionFieldValues, type TransactionFormAction } from '@/components/transaction-form';
 import { Button } from '@/components/ui/button';
 import { TRANSACTION_STATUSES } from '@/constants';
@@ -53,7 +54,7 @@ export default async function TransactionViewPage({ params }: PageProps) {
     getTransaction(transactionId),
   ]);
   const fieldValues: TransactionFieldValues = {
-    customerId: data.customer?.id ?? NaN,
+    customerId: data.customer?.id,
     status: data.status,
     items: data.items.map((item) => ({
       productId: String(item.product.id),
@@ -65,32 +66,33 @@ export default async function TransactionViewPage({ params }: PageProps) {
   };
 
   return (
-    <main className="container relative h-screen flex flex-col p-0">
-      <div className="flex justify-between items-center gap-4 p-4">
-        <h1 className="text-2xl font-bold">
-          Transaksi #{data.code ?? transactionId}
-        </h1>
+    <div className="relative h-screen flex flex-col">
+      <AppBar>
+        <div className="grow flex justify-between items-center gap-4">
+          <h1 className="text-xl font-bold">
+            Transaksi #{data.code ?? transactionId}
+          </h1>
+        </div>
 
-        <Button type="submit" form={`transaction/${transactionId}`}>
-          Simpan
-        </Button>
-      </div>
+        {fieldValues.status !== 'completed' && (
+          <Button type="submit" form={`transaction/${transactionId}`}>
+            Simpan
+          </Button>
+        )}
+      </AppBar>
 
-      {/* <div>
-        Dibuat pada: {data.createdAt.toLocaleString('id')}
-      </div>
-      <div>
-        Diperbarui pada: {data.updatedAt.toLocaleString('id')}
-      </div> */}
-
-      <TransactionForm
-        formId={`transaction/${transactionId}`}
-        fields={{
-          customer: fieldValues.customerId === undefined,
-        }}
-        values={fieldValues}
-        action={createAction(transactionId, fieldValues)}
-      />
-    </main>
+      <main className="container relative flex flex-col p-0">
+        <TransactionForm
+          formId={`transaction/${transactionId}`}
+          fields={{
+            customer: (fieldValues.customerId !== undefined) && 'readonly',
+            status: fieldValues.status === 'completed' && 'readonly',
+            items: fieldValues.status === 'completed' && 'readonly',
+          }}
+          values={fieldValues}
+          action={createAction(transactionId, fieldValues)}
+        />
+      </main>
+    </div>
   );
 }

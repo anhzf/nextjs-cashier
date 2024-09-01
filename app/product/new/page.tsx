@@ -1,4 +1,5 @@
 import { createProduct } from '@/calls/products';
+import { AppBar } from '@/components/app-bar';
 import { ProductForm, type ProductFormAction } from '@/components/product-form';
 import { Button } from '@/components/ui/button';
 import { PRODUCT_VARIANT_NO_VARIANTS } from '@/constants';
@@ -31,26 +32,26 @@ const action: ProductFormAction = async (payload) => {
 
 export default function ProductNewPage() {
   return (
-    <main className="container relative h-screen flex flex-col p-0">
-      <div className="flex items-center gap-4 p-4">
-        <Button asChild variant="ghost" size="icon" className="shrink-0">
-          <Link href="/product">
-            <ArrowLeftIcon className="w-6 h-6" />
-          </Link>
-        </Button>
+    <div className="relative h-screen flex flex-col">
+      <AppBar showMenu={false}>
+        <div className="grow flex items-center gap-4">
+          <Button asChild variant="ghost" size="icon" className="shrink-0">
+            <Link href="/product">
+              <ArrowLeftIcon className="w-6 h-6" />
+            </Link>
+          </Button>
 
-        <h1 className="text-2xl font-bold ">
-          Tambah Produk
-        </h1>
+          <h1 className="text-xl font-bold">
+            Produk Baru
+          </h1>
+        </div>
+      </AppBar>
 
-        <div />
-      </div>
-
-      <div className="p-4">
+      <main className="container relative flex flex-col p-4">
         <ProductForm
           action={action}
         />
-      </div >
-    </main>
+      </main>
+    </div>
   );
 }

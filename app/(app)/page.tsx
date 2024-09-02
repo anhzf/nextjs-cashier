@@ -5,12 +5,14 @@ import { AppBar } from '@/components/app-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PRODUCT_STOCK_ALERT_THRESHOLD } from '@/constants';
 import { db } from '@/db';
 import { products } from '@/db/schema';
 import { priceFormatter } from '@/utils/format';
+import { endOfWeek, startOfWeek } from 'date-fns';
 import { count, lte } from 'drizzle-orm';
 import { AlertTriangleIcon, ArrowUpRight, DollarSign, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -18,12 +20,12 @@ import { cache, Suspense } from 'react';
 
 const getSummaryOfTransactionsTotalAndCount = cache(_getSummaryOfTransactionsTotalAndCount);
 
-const weekAgo = new Date(Date.now() - 7 * 24 * 3600_000);
+const now = new Date();
 
 export default async function HomePage() {
   const summaryDateRange = [
-    new Date(weekAgo.getFullYear(), weekAgo.getMonth(), weekAgo.getDate()),
-    new Date(weekAgo.getFullYear(), weekAgo.getMonth(), weekAgo.getDate() + 7),
+    startOfWeek(now),
+    endOfWeek(now),
   ] as const;
 
   return (
@@ -37,18 +39,7 @@ export default async function HomePage() {
           </h1>
 
           <div className="flex gap-2">
-            <Button asChild className="grow">
-              <Link href="/transaction/new">
-                <PlusIcon className="size-5 mr-1" />
-                Buat Transaksi
-              </Link>
-            </Button>
-            <Button asChild variant="secondary" className="grow">
-              <Link href="/stock/new">
-                <PlusIcon className="size-5 mr-1" />
-                Tambah Stok
-              </Link>
-            </Button>
+            <DatePickerWithRange value={summaryDateRange} />
           </div>
         </div>
 

@@ -27,7 +27,5 @@ export async function getSummaryOfTransactionsTotalAndCount({
       lte(transactions.createdAt, end)
     ));
 
-  console.count('getSummaryOfTransactionsTotalAndCount');
-
   return result;
 }

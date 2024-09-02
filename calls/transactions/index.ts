@@ -3,7 +3,7 @@ import { products, transactionItems, transactions, type transactionStatusEnum } 
 import type { DbTransaction } from '@/types/db';
 import { badRequest } from '@/utils/errors';
 import { pick } from '@/utils/object';
-import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lte } from 'drizzle-orm';
 import { type PgColumn } from 'drizzle-orm/pg-core';
 import { notFound } from 'next/navigation';
 

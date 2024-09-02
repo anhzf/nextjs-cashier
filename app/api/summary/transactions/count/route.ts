@@ -1,4 +1,4 @@
-import { SUPPORTED_TRANSACTIONS_COUNT_INTERVAL_TIME_UNIT, getSummaryOfTransactionsCount } from '@/calls/summary/transactions-count';
+import { getSummaryOfTransactionsCountSeries, SUPPORTED_TRANSACTIONS_COUNT_INTERVAL_TIME_UNIT } from '@/calls/summary/transactions-count-series';
 import { defineApi } from '@/utils/api';
 import { DateQuerySchema } from '@/utils/validation';
 import { NextResponse } from 'next/server';
@@ -16,6 +16,6 @@ export const GET = defineApi(async (req) => {
   );
 
   return NextResponse.json({
-    data: await getSummaryOfTransactionsCount(query),
+    data: await getSummaryOfTransactionsCountSeries(query),
   });
 });

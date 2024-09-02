@@ -7,3 +7,5 @@ export const PRODUCT_VARIANT_NO_VARIANTS = {
 };
 
 export const ROUTE_SESSION_FAILED = '/signin';
+
+export const PRODUCT_STOCK_ALERT_THRESHOLD = 10;

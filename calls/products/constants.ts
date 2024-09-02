@@ -3,6 +3,7 @@ import type { PgColumn } from 'drizzle-orm/pg-core';
 
 export const ProductSortByMap = {
   name: products.name,
+  stock: products.stock,
   createdAt: products.createdAt,
   updatedAt: products.updatedAt,
 } satisfies Record<string, PgColumn>;

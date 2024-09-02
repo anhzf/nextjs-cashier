@@ -3,7 +3,7 @@ import { products, transactionItems, transactions, type transactionStatusEnum } 
 import type { DbTransaction } from '@/types/db';
 import { badRequest } from '@/utils/errors';
 import { pick } from '@/utils/object';
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, lte, sql } from 'drizzle-orm';
 import { type PgColumn } from 'drizzle-orm/pg-core';
 import { notFound } from 'next/navigation';
 
@@ -21,6 +21,8 @@ export interface ListTransactionQuery {
   sortBy?: keyof typeof sortByMap;
   sort?: 'asc' | 'desc';
   status?: typeof transactionStatusEnum.enumValues[number];
+  includes?: ('customer')[];
+  range?: [Date, Date];
 }
 
 const DEFAULT_LIST_TRANSACTIONS_QUERY = {
@@ -33,16 +35,22 @@ const DEFAULT_LIST_TRANSACTIONS_QUERY = {
 export const LIST_TRANSACTION_QUERY_SUPPORTED_SORT_BY = Object.keys(sortByMap) as (keyof typeof sortByMap)[];
 
 export const listTransaction = async (query?: ListTransactionQuery) => {
-  const { limit, start, sortBy, sort, status } = { ...DEFAULT_LIST_TRANSACTIONS_QUERY, ...query };
+  const { limit, start, sortBy, sort, status, includes, range } = { ...DEFAULT_LIST_TRANSACTIONS_QUERY, ...query };
 
   const results = await db.query.transactions.findMany({
     where: and(
       eq(transactions.isStocking, false),
       status && eq(transactions.status, status),
+      ...(range
+        ? [gte(transactions.createdAt, range[0]), lte(transactions.createdAt, range[1])]
+        : []),
     ),
     orderBy: sort === 'desc' ? desc(sortByMap[sortBy]) : asc(sortByMap[sortBy]),
     limit,
     offset: start,
+    with: {
+      customer: includes?.includes('customer') || undefined,
+    },
   });
 
   return results;

@@ -1,10 +1,10 @@
-import AppProviders from '@/app/providers';
 import { auth } from '@/auth';
+import { AppDrawer } from '@/components/app-drawer';
 import { cn } from '@/utils/ui';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
+import AppProviders from './providers';
 
-import { AppDrawer } from '@/components/app-drawer';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });

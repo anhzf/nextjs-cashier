@@ -1,13 +1,31 @@
+import { listProduct } from '@/calls/products';
+import { getSummaryOfTransactionsTotalAndCount as _getSummaryOfTransactionsTotalAndCount } from '@/calls/summary/transactions-count';
+import { listTransaction } from '@/calls/transactions';
 import { AppBar } from '@/components/app-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { PRODUCT_STOCK_ALERT_THRESHOLD } from '@/constants';
+import { db } from '@/db';
+import { products } from '@/db/schema';
 import { priceFormatter } from '@/utils/format';
+import { count, lte } from 'drizzle-orm';
 import { AlertTriangleIcon, ArrowUpRight, DollarSign, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
+import { cache, Suspense } from 'react';
+
+const getSummaryOfTransactionsTotalAndCount = cache(_getSummaryOfTransactionsTotalAndCount);
+
+const weekAgo = new Date(Date.now() - 7 * 24 * 3600_000);
 
 export default async function HomePage() {
+  const summaryDateRange = [
+    new Date(weekAgo.getFullYear(), weekAgo.getMonth(), weekAgo.getDate()),
+    new Date(weekAgo.getFullYear(), weekAgo.getMonth(), weekAgo.getDate() + 7),
+  ] as const;
+
   return (
     <div className="relative h-screen flex flex-col">
       <AppBar className="lg:hidden" />
@@ -35,41 +53,39 @@ export default async function HomePage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Pendapatan
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {priceFormatter.format(1000000)}
-              </div>
-              {/* <p className="text-xs text-muted-foreground">+20.1% from last month</p> */}
-              <p className="text-xs text-muted-foreground">
-                dari 312 transaksi
-              </p>
-            </CardContent>
-          </Card>
+          <Suspense fallback={
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Pendapatan
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-7 w-3/4" />
+                <Skeleton className="h-4 w-1/2 mt-1" />
+              </CardContent>
+            </Card>
+          }>
+            <RevenueCard range={summaryDateRange} />
+          </Suspense>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Hutang
-              </CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {priceFormatter.format(1230000)}
-              </div>
-              {/* <p className="text-xs text-muted-foreground">+20.1% from last month</p> */}
-              <p className="text-xs text-muted-foreground">
-                dari 312 transaksi
-              </p>
-            </CardContent>
-          </Card>
+          <Suspense fallback={
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Hutang
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-7 w-3/4" />
+                <Skeleton className="h-4 w-1/2 mt-1" />
+              </CardContent>
+            </Card>
+          }>
+            <DebtCard range={summaryDateRange} />
+          </Suspense>
 
           <Card className="hidden md:flex opacity-40 min-h-24 flex-col justify-center">
             <div className="text-3xl font-bold text-center">
@@ -85,99 +101,280 @@ export default async function HomePage() {
         </div>
 
         <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-          <Card className="xl:col-span-2">
-            <CardHeader className="flex flex-row items-center">
-              <div className="grid gap-2">
+          <Suspense fallback={(
+            <Card className="xl:col-span-2">
+              <CardHeader className="flex flex-row items-center">
+                <div className="grid gap-2">
+                  <CardTitle className="flex items-center gap-2">
+                    Hutang <Skeleton className="h-6 w-[2.5ch] rounded-full" />
+                  </CardTitle>
+                  <CardDescription>
+                    Transaksi yang belum dibayar
+                  </CardDescription>
+                </div>
+                <Button asChild variant="outline" size="sm" className="ml-auto gap-1">
+                  <Link href={{ pathname: '/transaction', query: { status: 'pending' } }}>
+                    Lihat semua
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Kustomer</TableHead>
+                      <TableHead className="">
+                        Tenggat Pembayaran
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="p-3">
+                          <div className="font-medium">
+                            <Skeleton className="h-3 w-1/2" />
+                          </div>
+                        </TableCell>
+                        <TableCell className="p-3 text-sm">
+                          <Skeleton className="h-3 w-1/2" />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}>
+            <DebtorCard range={summaryDateRange} />
+          </Suspense>
+
+          <Suspense fallback={(
+            <Card>
+              <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  Hutang <Badge>43</Badge>
+                  <AlertTriangleIcon className="inline-block text-amber-500" />
+                  Peringatan Stok
                 </CardTitle>
-                <CardDescription>
-                  Transaksi yang belum dibayar
-                </CardDescription>
-              </div>
-              <Button asChild variant="outline" size="sm" className="ml-auto gap-1">
-                <Link href={{ pathname: '/transaction', query: { status: 'pending' } }}>
-                  Lihat semua
-                  <ArrowUpRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Kustomer</TableHead>
-                    <TableHead className="">
-                      Tenggat Pembayaran
-                    </TableHead>
-                    <TableHead className="text-right">Belum dibayar</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {[
-                    { id: 1, name: 'Budi', dueDate: '2023-06-23', amount: 100000 },
-                    { id: 2, name: 'Ani', dueDate: '2023-06-24', amount: 200000 },
-                    { id: 3, name: 'Citra', dueDate: '2023-06-25', amount: 300000 },
-                    { id: 4, name: 'Dewi', dueDate: '2023-06-26', amount: 400000 },
-                    { id: 5, name: 'Eko', dueDate: '2023-06-27', amount: 500000 },
-                  ].map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="p-3">
-                        <div className="font-medium">{item.name}</div>
-                      </TableCell>
-                      <TableCell className="p-3 text-sm">
-                        {item.dueDate}
-                      </TableCell>
-                      <TableCell className="p-3 text-right">
-                        {priceFormatter.format(item.amount)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent className="grid gap-8">
+                <Table>
+                  <TableBody>
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="w-full p-2 text-sm font-medium leading-none">
+                          <div className="line-clamp-1 max-w-[28ch]">
+                            <Skeleton className="h-3 w-3/4" />
+                          </div>
+                        </TableCell>
+                        <TableCell className="p-2 text-right">
+                          <Skeleton className="h-3 w-[6ch]" />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
 
-          <Card className="h-min">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangleIcon className="inline-block text-amber-500" />
-                Peringatan Stok
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-8">
-              <Table>
-                <TableBody>
-                  {[
-                    { id: 1, name: 'Beras', stock: 10 },
-                    { id: 2, name: 'Gula', stock: 5 },
-                    { id: 3, name: 'Minyak Goreng', stock: 3 },
-                    { id: 4, name: 'Telur', stock: 2 },
-                    { id: 5, name: 'Daging Ayam', stock: 1 },
-                  ].map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="p-2 text-sm font-medium leading-none">
-                        {item.name}
-                      </TableCell>
-                      <TableCell className="p-2 text-right">
-                        <Badge variant="outline">
-                          {item.stock} tersisa
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              <Button asChild variant="link" size="sm">
-                <Link href={{ pathname: 'product', query: { orderBy: 'stock' } }} className="text-sm text-muted-foreground">
-                  Lihat 7 barang lainnya
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+                <Button asChild variant="link" size="sm">
+                  <Link href={{ pathname: 'product', query: { orderBy: 'stock' } }}
+                    className="text-sm text-muted-foreground"
+                  >
+                    Lihat 5 barang lainnya
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}>
+            <StockAlertCard />
+          </Suspense>
         </div>
       </main>
     </div>
+  );
+}
+
+interface SummaryCardProps {
+  range: readonly [Date, Date];
+}
+
+async function RevenueCard({ range: [start, end] }: SummaryCardProps) {
+  const { total, count } = await _getSummaryOfTransactionsTotalAndCount({
+    status: 'completed',
+    start,
+    end,
+  });
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">
+          Total Pendapatan
+        </CardTitle>
+        <DollarSign className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">
+          {priceFormatter.format(total)}
+        </div>
+        {/* <p className="text-xs text-muted-foreground">+20.1% from last month</p> */}
+        <p className="text-xs text-muted-foreground">
+          dari {count} transaksi
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+async function DebtCard({ range: [start, end] }: SummaryCardProps) {
+  const { total, count } = await getSummaryOfTransactionsTotalAndCount({
+    status: 'pending',
+    start,
+    end,
+  });
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">
+          Total Hutang
+        </CardTitle>
+        <DollarSign className="h-4 w-4 text-muted-foreground" />
+      </CardHeader>
+      <CardContent>
+        <div className="text-2xl font-bold">
+          {priceFormatter.format(total)}
+        </div>
+        {/* <p className="text-xs text-muted-foreground">+20.1% from last month</p> */}
+        <p className="text-xs text-muted-foreground">
+          dari {count} transaksi
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+async function DebtorCard({ range: [start, end] }: SummaryCardProps) {
+  const [
+    { count },
+    transactions,
+  ] = await Promise.all([
+    getSummaryOfTransactionsTotalAndCount({ status: 'pending', start, end }),
+    listTransaction({
+      status: 'pending',
+      sortBy: 'createdAt',
+      sort: 'desc',
+      limit: 5,
+      range: [start, end],
+      includes: ['customer'],
+    }),
+  ]);
+
+  return (
+    <Card className="xl:col-span-2 h-min min-h-72">
+      <CardHeader className="flex flex-row items-center">
+        <div className="grid gap-2">
+          <CardTitle className="flex items-center gap-2">
+            Hutang <Badge>{count}</Badge>
+          </CardTitle>
+          <CardDescription>
+            Transaksi yang belum dibayar
+          </CardDescription>
+        </div>
+        <Button asChild variant="outline" size="sm" className="ml-auto gap-1">
+          <Link href={{ pathname: '/transaction', query: { status: 'pending' } }}>
+            Lihat semua
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        </Button>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>
+                Kustomer
+              </TableHead>
+              <TableHead className="text-right">
+                Tenggat Pembayaran
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {transactions.length
+              ? transactions.map((item) => (
+                <TableRow key={item.id}>
+                  <TableCell className="p-3">
+                    <div className="font-medium">{item.customer?.name || 'Tanpa Nama'}</div>
+                  </TableCell>
+                  <TableCell className="p-3 text-sm text-right">
+                    {item.dueDate?.toLocaleDateString() || '-'}
+                  </TableCell>
+                </TableRow>
+              ))
+              : (
+                <TableRow>
+                  <TableCell colSpan={2} className="py-8 text-center">
+                    Yeayy! Tidak ada hutang 🎉
+                  </TableCell>
+                </TableRow>
+              )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
+async function StockAlertCard() {
+  const [
+    items,
+    [{ count: alertCount }],
+  ] = await Promise.all([
+    listProduct({
+      sortBy: 'stock',
+      limit: 5,
+    }),
+    // TODO: Move this to a separate function
+    db.select({ count: count() })
+      .from(products)
+      .where(lte(products.stock, PRODUCT_STOCK_ALERT_THRESHOLD)),
+  ]);
+
+  return (
+    <Card className="h-min">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <AlertTriangleIcon className="inline-block text-amber-500" />
+          Peringatan Stok
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-8">
+        <Table>
+          <TableBody>
+            {items.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell className="p-2 text-sm font-medium leading-none">
+                  <div className="line-clamp-1 max-w-[28ch]">
+                    {item.name}
+                  </div>
+                </TableCell>
+                <TableCell className="p-2 text-right">
+                  <Badge variant="outline" className="text-red-400">
+                    {item.stock} tersisa
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+
+        <Button asChild variant="link" size="sm">
+          <Link href={{ pathname: 'product', query: { orderBy: 'stock' } }} className="text-sm text-muted-foreground">
+            Lihat {alertCount - items.length} barang lainnya
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
   );
 }

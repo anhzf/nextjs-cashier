@@ -1,43 +1,33 @@
+import type { TRANSACTION_STATUSES } from '@/constants';
 import { db } from '@/db';
-import { transactions } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { transactionItems, transactions } from '@/db/schema';
+import { and, eq, gte, lte, sql } from 'drizzle-orm';
 
-export const SUPPORTED_TRANSACTIONS_COUNT_INTERVAL_TIME_UNIT = ['hour', 'day', 'week', 'month'] as const;
-
-interface TransactionCountsOptions {
+interface TransactionsTotalAndCountOptions {
   start: Date;
   end: Date;
-  interval: typeof SUPPORTED_TRANSACTIONS_COUNT_INTERVAL_TIME_UNIT[number];
+  status: typeof TRANSACTION_STATUSES[number];
 }
 
-interface TransactionsCount {
-  counts: {
-    start: Date;
-    end: Date;
-    count: number;
-  }[];
+export async function getSummaryOfTransactionsTotalAndCount({
+  start, end, status,
+}: TransactionsTotalAndCountOptions) {
+  const [result] = await db.select({
+    total: sql<number> `COALESCE(SUM(${transactionItems.price} * ${transactionItems.qty}), 0)`.mapWith(Number),
+    items: sql<number> `COALESCE(SUM(${transactionItems.qty}), 0)`.mapWith(Number),
+    count: sql<number> `COUNT(${transactionItems.qty})`.mapWith(Number),
+  }).from(transactions)
+    .leftJoin(
+      transactionItems,
+      eq(transactions.id, transactionItems.transactionId)
+    )
+    .where(and(
+      eq(transactions.status, status),
+      gte(transactions.createdAt, start),
+      lte(transactions.createdAt, end)
+    ));
+
+  console.count('getSummaryOfTransactionsTotalAndCount');
+
+  return result;
 }
-
-export const getSummaryOfTransactionsCount = async ({
-  start,
-  end,
-  interval,
-}: TransactionCountsOptions): Promise<TransactionsCount> => {
-  const dateRange = db.$with('date_range').as(
-    db.select({ start: sql`start`.as('start') })
-      .from(sql`(SELECT generate_series(${start}::date, ${end}::date, ${`1 ${interval}`}::interval) AS start)`)
-  );
-
-  const result = await db.with(dateRange).select({
-    start: sql<Date>`${dateRange.start}`.mapWith((v) => new Date(v)),
-    end: sql<Date>`${dateRange.start} + interval '23 hours 59 minutes 59 seconds'`.mapWith((v) => new Date(v)),
-    count: sql<number>`COUNT(${transactions.id})`.mapWith(Number),
-  }).from(dateRange)
-    .leftJoin(transactions, eq(sql`${transactions.createdAt}::date`, dateRange.start))
-    .groupBy(dateRange.start)
-    .orderBy(dateRange.start);
-
-  return {
-    counts: result,
-  };
-};

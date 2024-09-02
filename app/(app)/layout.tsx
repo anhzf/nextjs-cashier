@@ -1,4 +1,4 @@
-import { auth } from '@/auth';
+import { auth, signIn } from '@/auth';
 import { AppDrawer } from '@/components/app-drawer';
 import { cn } from '@/utils/ui';
 import type { Metadata } from 'next';
@@ -20,6 +20,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
+
+  if (!session) return signIn();
 
   return (
     <html lang="id">

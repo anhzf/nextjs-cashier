@@ -1,11 +1,11 @@
 'use client';
 
-import SessionStates from '@/components/session-states';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/utils/ui';
-import { LayoutDashboardIcon, PackageIcon, ShoppingCartIcon } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { LayoutDashboardIcon, LogOutIcon, PackageIcon, ShoppingCartIcon } from 'lucide-react';
+import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createContext, useContext, useState, type Dispatch, type MouseEventHandler, type SetStateAction } from 'react';
@@ -47,6 +47,10 @@ export function AppDrawer() {
     setIsOpen(false);
   };
 
+  const onSignOutClick = async () => {
+    await signOut();
+  }
+
   return (
     <>
       {isOpen && <div className="fixed z-20 inset-0 bg-gray-700/50" onClick={onOverlayClick} />}
@@ -82,21 +86,35 @@ export function AppDrawer() {
           </div>
         </div>
 
-        <div className="absolute bottom-4 left-4 flex items-center gap-4">
-          <Avatar>
-            <AvatarFallback>
-              {session.data?.user?.name?.at(0)?.toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="text-sm font-medium">
-              {session.data?.user?.name}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {session.data?.user?.email}
-            </p>
-          </div>
-        </div>
+        <Popover>
+          <PopoverTrigger className="absolute bottom-4 left-4 flex items-center gap-4">
+            <Avatar>
+              <AvatarFallback>
+                {session.data?.user?.name?.at(0)?.toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="text-sm text-left font-medium">
+                {session.data?.user?.name}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {session.data?.user?.email}
+              </p>
+            </div>
+          </PopoverTrigger>
+
+          <PopoverContent>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={onSignOutClick}
+            >
+              <LogOutIcon className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
+          </PopoverContent>
+        </Popover>
       </nav>
     </>
   );

@@ -1,6 +1,6 @@
 "use client"
 
-import { addDays, format, lastDayOfWeek, startOfWeek } from 'date-fns'
+import { format } from 'date-fns'
 import { Calendar as CalendarIcon } from 'lucide-react'
 import * as React from 'react'
 import { DateRange, type SelectRangeEventHandler } from 'react-day-picker'
@@ -14,56 +14,60 @@ import {
 } from '@/components/ui/popover'
 import { cn } from '@/utils/ui'
 
-type Value = readonly [Date, Date];
+type Value = [Date?, Date?];
 
-interface Props extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
   value?: Value;
-  onChange?: (value: Value) => void;
+  placeholder?: string;
+  displayValue?: (value: Value) => string;
+  onValueChange?: (value: Value) => void;
 }
 
 export function DatePickerWithRange({
-  value: [from, to] = [startOfWeek(new Date()), lastDayOfWeek(new Date())],
-  onChange,
+  placeholder,
+  value,
+  displayValue,
+  onValueChange,
   className,
   ...props
 }: Props) {
-  const [date, setDate] = React.useState<DateRange | undefined>({ from, to });
+  const [date, setDate] = React.useState<DateRange | undefined>({ from: value?.[0], to: value?.[1] });
 
   const handleChange: SelectRangeEventHandler = (range) => {
-    if (typeof onChange === 'function') {
-      onChange([range?.from ?? from, range?.to ?? to]);
-    } else {
-      setDate(range);
-    }
+    onValueChange?.([range?.from, range?.to]);
+    setDate(range);
   };
 
   return (
-    <div className={cn("grid gap-2", className)} {...props}>
+    <div className={cn('grid gap-2', className)} {...props}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             id="date"
             variant="outline"
             className={cn(
-              "w-[300px] justify-start text-left font-normal",
+              "w-72 justify-start text-left font-normal",
               !date && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            <CalendarIcon className="shrink-0 mr-2 h-4 w-4" />
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
+                  {displayValue?.([date.from, date.to]) || [
+                    format(date.from, 'LLL dd, y'),
+                    format(date.to, 'LLL dd, y'),
+                  ].join(' - ')}
                 </>
               ) : (
-                format(date.from, "LLL dd, y")
+                displayValue?.([date.from]) || format(date.from, 'LLL dd, y')
               )
             ) : (
-              <span>Pick a date</span>
+              <span>{placeholder || 'Pick a date'}</span>
             )}
           </Button>
         </PopoverTrigger>
+
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             initialFocus

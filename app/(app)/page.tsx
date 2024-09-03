@@ -23,10 +23,10 @@ const getSummaryOfTransactionsTotalAndCount = cache(_getSummaryOfTransactionsTot
 const now = new Date();
 
 export default async function HomePage() {
-  const summaryDateRange = [
+  const summaryDateRange: [Date, Date] = [
     startOfWeek(now),
     endOfWeek(now),
-  ] as const;
+  ];
 
   return (
     <div className="relative h-screen flex flex-col">

@@ -37,7 +37,7 @@ export const LIST_TRANSACTION_QUERY_SUPPORTED_SORT_BY = Object.keys(sortByMap) a
 export const listTransaction = async (query?: ListTransactionQuery) => {
   const {
     limit, start, sortBy, sort, status, includes, range,
-  } = defu(DEFAULT_LIST_TRANSACTIONS_QUERY, query) as (typeof DEFAULT_LIST_TRANSACTIONS_QUERY & ListTransactionQuery);
+  } = defu(query, DEFAULT_LIST_TRANSACTIONS_QUERY);
 
   console.log({ limit, start, sortBy, sort, status, includes, range });
 

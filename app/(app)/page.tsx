@@ -138,7 +138,7 @@ export default async function HomePage() {
               </CardContent>
             </Card>
           )}>
-            <DebtorCard range={summaryDateRange} />
+            <DebtorCard />
           </Suspense>
 
           <Suspense fallback={(
@@ -245,18 +245,17 @@ async function DebtCard({ range: [start, end] }: SummaryCardProps) {
   );
 }
 
-async function DebtorCard({ range: [start, end] }: SummaryCardProps) {
+async function DebtorCard() {
   const [
     { count },
     transactions,
   ] = await Promise.all([
-    getSummaryOfTransactionsTotalAndCount({ status: 'pending', start, end }),
+    getSummaryOfTransactionsTotalAndCount({ status: 'pending' }),
     listTransaction({
       status: 'pending',
       sortBy: 'createdAt',
       sort: 'desc',
       limit: 5,
-      range: [start, end],
       includes: ['customer'],
     }),
   ]);
@@ -286,9 +285,10 @@ async function DebtorCard({ range: [start, end] }: SummaryCardProps) {
               <TableHead>
                 Kustomer
               </TableHead>
-              <TableHead className="text-right">
+              <TableHead className="text-center">
                 Tenggat Pembayaran
               </TableHead>
+              <TableHead />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -298,8 +298,16 @@ async function DebtorCard({ range: [start, end] }: SummaryCardProps) {
                   <TableCell className="p-3">
                     <div className="font-medium">{item.customer?.name || 'Tanpa Nama'}</div>
                   </TableCell>
-                  <TableCell className="p-3 text-sm text-right">
+                  <TableCell className="p-3 text-sm text-center">
                     {item.dueDate?.toLocaleDateString() || '-'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Link
+                      href={`/transaction/${item.id}`}
+                      className="text-blue-500 hover:text-blue-400 font-medium underline underline-offset-4"
+                    >
+                      Detail
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))
@@ -352,7 +360,7 @@ async function StockAlertCard() {
                 </TableCell>
                 <TableCell className="p-2 text-right">
                   <Badge variant="outline" className="text-red-400">
-                    {item.stock} tersisa
+                    {item.stock ? `${item.stock} tersisa` : 'Kosong'}
                   </Badge>
                 </TableCell>
               </TableRow>

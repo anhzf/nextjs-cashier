@@ -9,7 +9,7 @@ import { TRANSACTION_STATUSES } from '@/constants';
 import { ListFilterIcon, XIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { InferOutput } from 'valibot';
-import type { QuerySchema } from './page';
+import type { QuerySchema } from './shared';
 
 type FilterBarProps = InferOutput<typeof QuerySchema>;
 

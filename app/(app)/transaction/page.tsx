@@ -1,15 +1,15 @@
-import { LIST_TRANSACTION_QUERY_SUPPORTED_SORT_BY, listTransaction } from '@/calls/transactions';
+import { listTransaction } from '@/calls/transactions';
 import { AppBar } from '@/components/app-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TRANSACTION_STATUSES } from '@/constants';
-import { DateQuerySchema } from '@/utils/validation';
 import { Edit2Icon, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import * as v from 'valibot';
 import { FilterBar } from './filter-bar';
+import { QuerySchema } from './shared';
 
 type TransactionStatus = typeof TRANSACTION_STATUSES[number];
 
@@ -18,16 +18,6 @@ const STATUS_CLASSES: Record<TransactionStatus, string> = {
   completed: 'bg-green-100 text-green-500',
   canceled: 'bg-gray-100 text-gray-500',
 };
-
-export const QuerySchema = v.object({
-  sortBy: v.optional(v.picklist(LIST_TRANSACTION_QUERY_SUPPORTED_SORT_BY)),
-  status: v.optional(v.union([
-    v.pipe(v.literal('all'), v.transform(() => undefined)),
-    v.picklist(TRANSACTION_STATUSES),
-  ])),
-  from: v.optional(DateQuerySchema),
-  to: v.optional(DateQuerySchema),
-});
 
 interface PageProps {
   searchParams: Record<string, string | string[]>;

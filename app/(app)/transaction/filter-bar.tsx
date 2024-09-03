@@ -25,19 +25,25 @@ export function FilterBar({ from, to, sortBy = 'createdAt', status }: FilterBarP
   if (status) searchParams.append('status', status);
 
   const onStatusChange = (status: string) => {
-    if (status && status !== 'all') searchParams.append('status', status);
+    if (status && status !== 'all') searchParams.set('status', status);
     else searchParams.delete('status');
     router.push(`?${searchParams}`);
   };
 
+  const onSortByChange = (sortBy: string) => {
+    if (sortBy) searchParams.set('sortBy', sortBy);
+    else searchParams.delete('sortBy');
+    router.push(`?${searchParams}`);
+  }
+
   const onFromChange = (value?: Date) => {
-    if (value) searchParams.append('from', dateToQuery(value));
+    if (value) searchParams.set('from', dateToQuery(value));
     else searchParams.delete('from');
     router.push(`?${searchParams}`);
   };
 
   const onToChange = (value?: Date) => {
-    if (value) searchParams.append('to', dateToQuery(value));
+    if (value) searchParams.set('to', dateToQuery(value));
     else searchParams.delete('to');
     router.push(`?${searchParams}`);
   };
@@ -71,7 +77,7 @@ export function FilterBar({ from, to, sortBy = 'createdAt', status }: FilterBarP
           Urut berdasarkan:
         </Label>
 
-        <Select defaultValue={sortBy}>
+        <Select defaultValue={sortBy} onValueChange={onSortByChange}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Urut berdasarkan" />
           </SelectTrigger>

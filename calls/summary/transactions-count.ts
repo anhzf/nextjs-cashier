@@ -4,9 +4,9 @@ import { transactionItems, transactions } from '@/db/schema';
 import { and, eq, gte, lte, sql } from 'drizzle-orm';
 
 interface TransactionsTotalAndCountOptions {
-  start: Date;
-  end: Date;
-  status: typeof TRANSACTION_STATUSES[number];
+  start?: Date;
+  end?: Date;
+  status?: typeof TRANSACTION_STATUSES[number];
 }
 
 export async function getSummaryOfTransactionsTotalAndCount({
@@ -22,9 +22,9 @@ export async function getSummaryOfTransactionsTotalAndCount({
       eq(transactions.id, transactionItems.transactionId)
     )
     .where(and(
-      eq(transactions.status, status),
-      gte(transactions.createdAt, start),
-      lte(transactions.createdAt, end)
+      status && eq(transactions.status, status),
+      start && gte(transactions.createdAt, start),
+      end && lte(transactions.createdAt, end)
     ));
 
   return result;

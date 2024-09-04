@@ -15,26 +15,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PRODUCT_VARIANT_NO_VARIANTS, TRANSACTION_STATUSES } from '@/constants';
 import { cn } from '@/utils/ui';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
+import { valibotResolver } from '@hookform/resolvers/valibot';
 import { DialogDescription } from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@uidotdev/usehooks';
 import { CalendarIcon, DollarSignIcon, MinusIcon, PlusIcon, SearchIcon, ShoppingCartIcon, UserIcon } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, type SubmitHandler } from 'react-hook-form';
+import * as v from 'valibot';
+import { TransactionFieldValuesSchema } from './shared';
 
-export interface TransactionFieldValues {
-  customerId?: number;
-  status: string;
-  items: {
-    productId: string;
-    variant: string;
-    qty: number;
-  }[];
-  dueDate?: Date;
-  paid?: number;
-}
-
-const INITIAL_VALUES: TransactionFieldValues = {
+const INITIAL_VALUES: v.InferInput<typeof TransactionFieldValuesSchema> = {
   status: 'pending',
   items: [],
   paid: 0,
@@ -60,11 +51,11 @@ const DEFAULT_FIELDS: Required<FieldOptions> = {
   summary: true,
 };
 
-export type TransactionFormAction = (values: TransactionFieldValues) => Promise<void>;
+export type TransactionFormAction = (values: v.InferOutput<typeof TransactionFieldValuesSchema>) => Promise<void>;
 
 interface TransactionFormProps extends React.ComponentProps<'div'> {
   formId?: string;
-  values?: TransactionFieldValues;
+  values?: v.InferInput<typeof TransactionFieldValuesSchema>;
   action?: TransactionFormAction;
   stocking?: boolean;
   fields?: FieldOptions;
@@ -93,8 +84,11 @@ export function TransactionForm({
   const [productFilterTerm, setProductFilterTerm] = useState<string>();
   const [productFilterTag, setProductFilterTag] = useState<string>();
 
-  const formMethods = useForm<TransactionFieldValues>({ defaultValues: values });
-  const { control, register, setValue, watch, handleSubmit } = formMethods;
+  const formMethods = useForm({
+    resolver: valibotResolver(TransactionFieldValuesSchema),
+    defaultValues: values,
+  });
+  const { control, register, setValue, watch, formState: { errors }, handleSubmit } = formMethods;
 
   const customerId = watch('customerId');
   const status = watch('status');
@@ -127,10 +121,10 @@ export function TransactionForm({
     if (tag) setProductFilterTag(tag === '$default' ? undefined : tag);
   }, []);
 
-  const onSubmit: SubmitHandler<TransactionFieldValues> = (payload) => {
+  const onSubmit: SubmitHandler<v.InferInput<typeof TransactionFieldValuesSchema>> = (payload) => {
     startSaving(async () => {
       try {
-        await action?.(payload);
+        await action?.(payload as v.InferOutput<typeof TransactionFieldValuesSchema>);
         setMessages([{ msg: 'Berhasil menyimpan data transaksi.', type: 'positive' }]);
       } catch (err) {
         setMessages([{ msg: String(err), type: 'negative' }]);
@@ -142,8 +136,15 @@ export function TransactionForm({
     <div className="flex flex-col gap-4 p-4">
       <FormProvider {...formMethods}>
         {/* <pre className="whitespace-pre">
-        {JSON.stringify(watch(), null, 2)}
-      </pre> */}
+          {JSON.stringify(watch(), null, 2)}
+        </pre>
+        <pre className="whitespace-pre">
+          {JSON.stringify(values, null, 2)}
+        </pre> */}
+
+        {/* <pre className="whitespace-pre">
+          {JSON.stringify(errors, null, 2)}
+        </pre> */}
 
         <form
           id={formId}
@@ -215,11 +216,12 @@ export function TransactionForm({
                   <Input
                     id="transaction/dueDate"
                     type="date"
+                    min={new Date().toISOString().split('T')[0]}
                     className="pl-8"
                     {...register('dueDate', {
-                      valueAsDate: true,
+                      // valueAsDate: true,
                       disabled: fields.dueDate === 'readonly',
-                      min: new Date().toISOString().split('T')[0],
+                      // min: new Date().toISOString().split('T')[0],
                     })}
                   />
                 </div>
@@ -428,7 +430,7 @@ interface ProductSelectorProps {
 }
 
 function ProductSelector({ tag, term, stocking }: ProductSelectorProps) {
-  const { control, formState: { defaultValues }, watch, setValue } = useFormContext<TransactionFieldValues>();
+  const { control, formState: { defaultValues }, watch, setValue } = useFormContext<v.InferInput<typeof TransactionFieldValuesSchema>>();
   const { append } = useFieldArray({ control, name: 'items', rules: { required: true, minLength: 1 } });
 
   const [root] = useAutoAnimate<HTMLDivElement>();

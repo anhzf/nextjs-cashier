@@ -1,9 +1,10 @@
 import { addItemsToTransaction, getTransaction, updateTransaction } from '@/calls/transactions';
 import { AppBar } from '@/components/app-bar';
-import { TransactionForm, type TransactionFieldValues, type TransactionFormAction } from '@/components/transaction-form';
+import { TransactionFieldValuesSchema, TransactionForm, type TransactionFormAction } from '@/components/transaction-form';
 import { Button } from '@/components/ui/button';
-import { TRANSACTION_STATUSES } from '@/constants';
+import { diff } from 'just-diff';
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import * as v from 'valibot';
 
 interface PageProps {
@@ -12,25 +13,18 @@ interface PageProps {
   };
 }
 
-const createAction = (id: number, before: TransactionFieldValues): TransactionFormAction => (
-  async ({ status, dueDate, items, paid }) => {
+const createAction = (id: number, before: v.InferOutput<typeof TransactionFieldValuesSchema>): TransactionFormAction => (
+  async ({ items, ...transaction }) => {
     'use server';
 
     // Ensure that we're only updating the fields that have changed
     const updates: Promise<any>[] = [];
 
-    if (before?.status !== status) {
-      const value = v.parse(v.picklist(TRANSACTION_STATUSES), status);
-      updates.push(updateTransaction(id, { status: value, dueDate, paid }));
+    if (diff(before, transaction).length > 0) {
+      updates.push(updateTransaction(id, transaction));
     }
 
-    /* TODO: Use 'just-diff'.diff() to find the item updates */
-    const hasItemsChange = items.length !== before?.items.length
-      || items.some((item, index) => (
-        item.productId !== before.items[index].productId
-        || item.variant !== before.items[index].variant
-        || item.qty !== before.items[index].qty
-      ));
+    const hasItemsChange = diff(before.items, items).length > 0;
 
     if (hasItemsChange) {
       updates.push(addItemsToTransaction(id, items.map((item) => ({
@@ -43,6 +37,7 @@ const createAction = (id: number, before: TransactionFieldValues): TransactionFo
     await Promise.all(updates);
 
     revalidatePath('/');
+    redirect('/transaction');
   }
 );
 
@@ -53,7 +48,7 @@ export default async function TransactionViewPage({ params }: PageProps) {
   ] = await Promise.all([
     getTransaction(transactionId),
   ]);
-  const fieldValues: TransactionFieldValues = {
+  const fieldValues: v.InferInput<typeof TransactionFieldValuesSchema> = {
     customerId: data.customer?.id,
     status: data.status,
     items: data.items.map((item) => ({
@@ -62,7 +57,7 @@ export default async function TransactionViewPage({ params }: PageProps) {
       qty: item.qty,
     })),
     paid: data.paid,
-    dueDate: data.dueDate ?? undefined,
+    dueDate: data.dueDate?.toISOString().split('T')[0],
   };
 
   return (
@@ -90,7 +85,7 @@ export default async function TransactionViewPage({ params }: PageProps) {
             items: fieldValues.status === 'completed' && 'readonly',
           }}
           values={fieldValues}
-          action={createAction(transactionId, fieldValues)}
+          action={createAction(transactionId, v.parse(TransactionFieldValuesSchema, fieldValues))}
         />
       </main>
     </div>

@@ -39,8 +39,6 @@ export const listTransaction = async (query?: ListTransactionQuery) => {
     limit, start, sortBy, sort, status, includes, range,
   } = defu(query, DEFAULT_LIST_TRANSACTIONS_QUERY);
 
-  console.log({ limit, start, sortBy, sort, status, includes, range });
-
   const results = await db.query.transactions.findMany({
     where: and(
       eq(transactions.isStocking, false),

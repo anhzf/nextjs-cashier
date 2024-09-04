@@ -10,6 +10,17 @@ import { ListFilterIcon, XIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { InferOutput } from 'valibot';
 import type { QuerySchema } from './shared';
+import { TRANSACTION_STATUSES_UI } from '@/ui';
+import { Badge } from '@/components/ui/badge';
+
+const SORT_BY_ATTRS = {
+  createdAt: {
+    title: 'Tanggal',
+  },
+  updatedAt: {
+    title: 'Terakhir diubah',
+  },
+} satisfies Record<typeof LIST_TRANSACTION_QUERY_SUPPORTED_SORT_BY[number], Record<string, unknown>>;
 
 type FilterBarProps = InferOutput<typeof QuerySchema>;
 
@@ -65,7 +76,9 @@ export function FilterBar({ from, to, sortBy = 'createdAt', status }: FilterBarP
             <SelectItem value="all">Semua</SelectItem>
             {TRANSACTION_STATUSES.map((status) => (
               <SelectItem key={status} value={status}>
-                {status}
+                <Badge className={TRANSACTION_STATUSES_UI[status].classes}>
+                  {TRANSACTION_STATUSES_UI[status].title}
+                </Badge>
               </SelectItem>
             ))}
           </SelectContent>
@@ -84,7 +97,7 @@ export function FilterBar({ from, to, sortBy = 'createdAt', status }: FilterBarP
           <SelectContent>
             {LIST_TRANSACTION_QUERY_SUPPORTED_SORT_BY.map((el) => (
               <SelectItem key={el} value={el}>
-                {el}
+                {SORT_BY_ATTRS[el].title}
               </SelectItem>
             ))}
           </SelectContent>

@@ -24,6 +24,8 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, type SubmitHandler } from 'react-hook-form';
 import * as v from 'valibot';
 import { TransactionFieldValuesSchema } from './shared';
+import { TRANSACTION_STATUSES_UI } from '@/ui';
+import { Badge } from '@/components/ui/badge';
 
 const INITIAL_VALUES: v.InferInput<typeof TransactionFieldValuesSchema> = {
   status: 'pending',
@@ -142,10 +144,6 @@ export function TransactionForm({
           {JSON.stringify(values, null, 2)}
         </pre> */}
 
-        {/* <pre className="whitespace-pre">
-          {JSON.stringify(errors, null, 2)}
-        </pre> */}
-
         <form
           id={formId}
           className="shrink-0 flex flex-col gap-2"
@@ -198,7 +196,11 @@ export function TransactionForm({
                     </SelectTrigger>
                     <SelectContent>
                       {TRANSACTION_STATUSES.map((status) => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                        <SelectItem key={status} value={status}>
+                          <Badge className={TRANSACTION_STATUSES_UI[status].classes}>
+                            {TRANSACTION_STATUSES_UI[status].title}
+                          </Badge>
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -219,9 +221,7 @@ export function TransactionForm({
                     min={new Date().toISOString().split('T')[0]}
                     className="pl-8"
                     {...register('dueDate', {
-                      // valueAsDate: true,
                       disabled: fields.dueDate === 'readonly',
-                      // min: new Date().toISOString().split('T')[0],
                     })}
                   />
                 </div>

@@ -10,14 +10,9 @@ import { Suspense } from 'react';
 import * as v from 'valibot';
 import { FilterBar } from './filter-bar';
 import { QuerySchema } from './shared';
+import { TRANSACTION_STATUSES_UI } from '@/ui';
 
 type TransactionStatus = typeof TRANSACTION_STATUSES[number];
-
-const STATUS_CLASSES: Record<TransactionStatus, string> = {
-  pending: 'bg-red-100 text-red-500',
-  completed: 'bg-green-100 text-green-500',
-  canceled: 'bg-gray-100 text-gray-500',
-};
 
 interface PageProps {
   searchParams: Record<string, string | string[]>;
@@ -114,8 +109,8 @@ async function TransactionList({ from, to, ...query }: TransactionListProps) {
                 {transaction.customer?.name || '-'}
               </TableCell>
               <TableCell className="text-center">
-                <Badge className={`cursor-default ${STATUS_CLASSES[transaction.status]}`}>
-                  {transaction.status}
+                <Badge className={`cursor-default ${TRANSACTION_STATUSES_UI[transaction.status].classes}`}>
+                  {TRANSACTION_STATUSES_UI[transaction.status].title}
                 </Badge>
               </TableCell>
               <TableCell>

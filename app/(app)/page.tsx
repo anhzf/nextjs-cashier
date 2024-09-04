@@ -10,10 +10,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PRODUCT_STOCK_ALERT_THRESHOLD } from '@/constants';
 import { db } from '@/db';
-import { products } from '@/db/schema';
+import { products, transactionItems, transactions } from '@/db/schema';
 import { priceFormatter } from '@/utils/format';
 import { endOfWeek, startOfWeek } from 'date-fns';
-import { count, lte } from 'drizzle-orm';
+import { count, eq, inArray, lte, sql, sum } from 'drizzle-orm';
 import { AlertTriangleIcon, ArrowUpRight, DollarSign, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { cache, Suspense } from 'react';
@@ -115,9 +115,13 @@ export default async function HomePage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Kustomer</TableHead>
-                      <TableHead className="">
+                      <TableHead>
                         Tenggat Pembayaran
                       </TableHead>
+                      <TableHead>
+                        Kekurangan
+                      </TableHead>
+                      <TableHead />
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -130,6 +134,12 @@ export default async function HomePage() {
                         </TableCell>
                         <TableCell className="p-3 text-sm">
                           <Skeleton className="h-3 w-1/2" />
+                        </TableCell>
+                        <TableCell className="p-3 text-right">
+                          <Skeleton className="h-3 w-[10ch]" />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Skeleton className="h-4 w-12" />
                         </TableCell>
                       </TableRow>
                     ))}
@@ -288,6 +298,9 @@ async function DebtorCard() {
               <TableHead className="text-center">
                 Tenggat Pembayaran
               </TableHead>
+              <TableHead className="text-right">
+                Kekurangan
+              </TableHead>
               <TableHead />
             </TableRow>
           </TableHeader>
@@ -300,6 +313,16 @@ async function DebtorCard() {
                   </TableCell>
                   <TableCell className="p-3 text-sm text-center">
                     {item.dueDate?.toLocaleDateString() || '-'}
+                  </TableCell>
+                  <TableCell className="p-3 text-right">
+                    <Suspense fallback={(
+                      <Skeleton className="h-3 w-[10ch] ml-auto" />
+                    )}>
+                      <PaidMinusCellContent
+                        ids={transactions.map((el) => el.id)}
+                        transactionId={item.id}
+                      />
+                    </Suspense>
                   </TableCell>
                   <TableCell className="text-right">
                     <Link
@@ -322,6 +345,31 @@ async function DebtorCard() {
         </Table>
       </CardContent>
     </Card>
+  );
+}
+
+// Use this convention for caching functions, make sure to use the same arguments too.
+const getPaidMinusDebt = cache(async (...transactionIds: number[]) => {
+  const results = await db.select({
+    id: transactions.id,
+    minus: sql<number>`COALESCE(SUM(${transactionItems.qty} * ${transactionItems.price}), 0) - ${transactions.paid}`,
+  })
+    .from(transactions)
+    .leftJoin(transactionItems, eq(transactions.id, transactionItems.transactionId))
+    .where(inArray(transactions.id, transactionIds))
+    .groupBy(transactions.id);
+
+  return results;
+});
+
+async function PaidMinusCellContent({ ids, transactionId }: { ids: number[], transactionId: number }) {
+  const results = await getPaidMinusDebt(...ids);
+  const minus = results.find((result) => result.id === transactionId)?.minus || 0;
+
+  return (
+    <div className="text-red-500">
+      {priceFormatter.format(minus)}
+    </div>
   );
 }
 

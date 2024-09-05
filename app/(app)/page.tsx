@@ -13,8 +13,8 @@ import { db } from '@/db';
 import { products, transactionItems, transactions } from '@/db/schema';
 import { priceFormatter } from '@/utils/format';
 import { endOfWeek, startOfWeek } from 'date-fns';
-import { count, eq, inArray, lte, sql, sum } from 'drizzle-orm';
-import { AlertTriangleIcon, ArrowUpRight, DollarSign, PlusIcon } from 'lucide-react';
+import { count, eq, inArray, lte, sql } from 'drizzle-orm';
+import { AlertTriangleIcon, ArrowUpRight, DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { cache, Suspense } from 'react';
 

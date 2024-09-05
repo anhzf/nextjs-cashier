@@ -1,22 +1,22 @@
+import { ExportCsvButton } from '@/app/(app)/transaction/export-csv-button';
 import { listTransaction } from '@/calls/transactions';
 import { AppBar } from '@/components/app-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { TRANSACTION_STATUSES } from '@/constants';
-import { Edit2Icon, PlusIcon } from 'lucide-react';
+import { TRANSACTION_STATUSES_UI } from '@/ui';
+import { Edit2Icon, FileSpreadsheetIcon, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import * as v from 'valibot';
 import { FilterBar } from './filter-bar';
 import { QuerySchema } from './shared';
-import { TRANSACTION_STATUSES_UI } from '@/ui';
-
-type TransactionStatus = typeof TRANSACTION_STATUSES[number];
 
 interface PageProps {
   searchParams: Record<string, string | string[]>;
 }
+
+const toExport: any[] = [];
 
 export default async function TransactionListPage({ searchParams }: PageProps) {
   const query = v.parse(v.objectWithRest(QuerySchema.entries, v.string()), searchParams);
@@ -30,16 +30,23 @@ export default async function TransactionListPage({ searchParams }: PageProps) {
           </h1>
         </div>
 
-        <Button asChild variant="ghost" size="icon" aria-label="Transaksi Baru">
-          <Link href="/transaction/new">
-            <PlusIcon className="size-6" />
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <ExportCsvButton data={toExport}>
+            <FileSpreadsheetIcon className="size-6" />
+          </ExportCsvButton>
+
+          <Button asChild aria-label="Transaksi Baru">
+            <Link href="/transaction/new">
+              <PlusIcon className="size-4 mr-1" />
+              Transaksi
+            </Link>
+          </Button>
+        </div>
       </AppBar>
 
       <FilterBar {...query} />
 
-      <main className="container relative flex flex-col gap-4 py-4">
+      <main className="container relative flex flex-col gap-4 px-2 py-4">
         <Suspense fallback={(
           <Table>
             <TableHeader>
@@ -80,6 +87,11 @@ async function TransactionList({ from, to, ...query }: TransactionListProps) {
     range: [from, to],
     includes: ['customer'],
   });
+
+  toExport.splice(0, toExport.length, ...data);
+
+  console.log(toExport);
+
 
   return (
     <div className="">

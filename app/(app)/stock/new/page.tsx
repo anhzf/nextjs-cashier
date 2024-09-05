@@ -1,8 +1,11 @@
 import { auth } from '@/auth';
 import { createTransaction } from '@/calls/transactions';
+import { AppBar, AppBarTitle } from '@/components/app-bar';
 import { TransactionForm, type TransactionFormAction } from '@/components/transaction-form';
 import { Button } from '@/components/ui/button';
 import { ROUTE_SESSION_FAILED } from '@/constants';
+import { PlusIcon, SaveIcon } from 'lucide-react';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import * as v from 'valibot';
 
@@ -34,34 +37,58 @@ const action: TransactionFormAction = async (values) => {
     isStocking: true,
   });
 
-  return redirect('/');
+  return redirect('/product');
 };
 
-export default async function StockNewPage() {
+export default async function StockNewPage({ searchParams }: { searchParams: Record<string, string> }) {
+  const persistedValue = searchParams.values && JSON.parse(searchParams.values);
+
   return (
-    <main className="container relative h-screen flex flex-col p-0">
-      <div className="flex justify-between items-center gap-4 p-4">
-        <h1 className="text-2xl font-bold">
-          Tambah Stok
-        </h1>
+    <div className="relative h-screen max-w-[100vw] flex flex-col">
+      <AppBar>
+        <div className="grow flex justify-between items-center gap-4">
+          <AppBarTitle>Tambah Stok</AppBarTitle>
 
-        <Button type="submit" form="stock/new">
-          Simpan
-        </Button>
-      </div>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="secondary">
+              <Link href="/product/new">
+                <PlusIcon className="mr-1 size-4" />
+                Produk
+              </Link>
+            </Button>
 
-      <TransactionForm
-        formId="stock/new"
-        action={action}
-        stocking
-        fields={{
-          customer: false,
-          status: false,
-          dueDate: false,
-          paid: false,
-          summary: false,
-        }}
-      />
-    </main>
+            <Button type="submit" form="stock/new">
+              <SaveIcon className="mr-1 size-4" />
+              Simpan
+            </Button>
+          </div>
+        </div>
+      </AppBar>
+
+      <main className="container relative flex flex-col gap-2 px-0">
+        <TransactionForm
+          formId="stock/new"
+          action={action}
+          stocking
+          fields={{
+            customer: false,
+            status: false,
+            dueDate: false,
+            paid: false,
+            summary: false,
+          }}
+          values={persistedValue}
+        />
+
+        {/* <div className="fixed bottom-4 right-4 flex flex-col gap-2">
+          <Button asChild variant="secondary" className="shadow-md">
+            <Link href="/product/new">
+              <PlusIcon className="mr-1 size-4" />
+              Produk
+            </Link>
+          </Button>
+        </div> */}
+      </main>
+    </div>
   );
 }

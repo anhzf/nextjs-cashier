@@ -57,7 +57,7 @@ export function AppDrawer() {
 
       <nav
         className={cn(
-          'shrink-0 fixed lg:static z-20 inset-y-0 left-0 flex w-64 flex-col bg-white text-gray-700 border-r shadow-xl lg:shadow-none overflow-hidden lg:translate-x-0 transition-transform',
+          'shrink-0 fixed lg:static z-20 top-16 bottom-0 left-0 flex w-64 flex-col bg-white text-gray-700 border-r shadow-xl lg:shadow-none overflow-hidden lg:translate-x-0 transition-transform',
           isOpen ? 'translate-x-0' : '-translate-x-full',
         )}
       >

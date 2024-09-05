@@ -1,12 +1,12 @@
 import { createProduct } from '@/calls/products';
 import { AppBar } from '@/components/app-bar';
+import { ButtonBack } from '@/components/button-back';
 import { ProductForm, type ProductFormAction } from '@/components/product-form';
 import { Button } from '@/components/ui/button';
 import { PRODUCT_VARIANT_NO_VARIANTS } from '@/constants';
 import type { ProductVariants } from '@/db/schema';
 import { ArrowLeftIcon } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 const action: ProductFormAction = async (payload) => {
@@ -36,9 +36,9 @@ export default function ProductNewPage() {
       <AppBar showMenu={false}>
         <div className="grow flex items-center gap-4">
           <Button asChild variant="ghost" size="icon" className="shrink-0">
-            <Link href="/product">
+            <ButtonBack>
               <ArrowLeftIcon className="w-6 h-6" />
-            </Link>
+            </ButtonBack>
           </Button>
 
           <h1 className="text-xl font-bold">

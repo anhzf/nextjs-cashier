@@ -30,7 +30,7 @@ const action: TransactionFormAction = async (values) => {
     paid: v.optional(v.number()),
   }, 'Invalid payload');
 
-  const id = await createTransaction(v.parse(PayloadSchema, {
+  await createTransaction(v.parse(PayloadSchema, {
     userId: Number(session.user.id),
     customerId: values.customerId,
     status: values.status as any,

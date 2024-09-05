@@ -4,13 +4,12 @@ import { listTag } from '@/calls/tags';
 import { AppBar } from '@/components/app-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getPriceDisplay } from '@/utils/models';
 import { cn } from '@/utils/ui';
 import { BooleanQuerySchema, NumberQuerySchema } from '@/utils/validation';
-import { EyeOffIcon, PencilIcon, PlusCircleIcon, TriangleAlertIcon } from 'lucide-react';
+import { EyeOffIcon, PencilIcon, PlusIcon, TriangleAlertIcon } from 'lucide-react';
 import Link from 'next/link';
 import * as v from 'valibot';
 import { ProductListSwitchHidden } from './clients';
@@ -39,19 +38,28 @@ export default async function ProductPage({ searchParams }: PageProps) {
   ]);
 
   return (
-    <div className="relative h-screen flex flex-col">
+    <div className="relative h-screen max-w-[100vw] flex flex-col">
       <AppBar>
         <div className="grow flex justify-between items-center gap-4">
           <h1 className="text-xl font-bold">
             Produk
           </h1>
 
-          <Button asChild>
-            <Link href="/product/new">
-              <PlusCircleIcon className="mr-2 size-4" />
-              Produk Baru
-            </Link>
-          </Button>
+          <div className="flex justify-end gap-2">
+            <Button asChild variant="secondary">
+              <Link href="/stock/new">
+                <PlusIcon className="mr-2 size-4" />
+                Stok
+              </Link>
+            </Button>
+
+            <Button asChild>
+              <Link href="/product/new">
+                <PlusIcon className="mr-2 size-4" />
+                Produk
+              </Link>
+            </Button>
+          </div>
         </div>
       </AppBar>
 
@@ -82,11 +90,11 @@ export default async function ProductPage({ searchParams }: PageProps) {
           <ProductListSwitchHidden query={query} />
         </div>
 
-        <ScrollArea className="w-full max-w-full">
+        <div className="w-full overflow-auto">
           <Table className="min-w-[640px]">
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[40%] sticky left-0 bg-background">
+                <TableHead className="w-[40%]">
                   Nama
                 </TableHead>
                 <TableHead>
@@ -104,7 +112,7 @@ export default async function ProductPage({ searchParams }: PageProps) {
             <TableBody>
               {products.map((product) => (
                 <TableRow key={product.id}>
-                  <TableCell className="sticky left-0 bg-background p-2">
+                  <TableCell className="">
                     <div className={`font-medium flex items-center gap-2 ${product.isHidden ? "text-muted-foreground" : ""}`}>
                       {product.name}
                       {product.isHidden && (
@@ -153,7 +161,7 @@ export default async function ProductPage({ searchParams }: PageProps) {
               ))}
             </TableBody>
           </Table>
-        </ScrollArea>
+        </div>
       </main>
     </div>
   );

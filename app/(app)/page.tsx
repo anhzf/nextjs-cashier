@@ -336,7 +336,7 @@ async function DebtorCard() {
               ))
               : (
                 <TableRow>
-                  <TableCell colSpan={2} className="py-8 text-center">
+                  <TableCell colSpan={4} className="py-8 text-center">
                     Yeayy! Tidak ada hutang 🎉
                   </TableCell>
                 </TableRow>

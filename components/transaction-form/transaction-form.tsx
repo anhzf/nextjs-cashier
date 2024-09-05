@@ -26,6 +26,7 @@ import * as v from 'valibot';
 import { TransactionFieldValuesSchema } from './shared';
 import { TRANSACTION_STATUSES_UI } from '@/ui';
 import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation';
 
 const INITIAL_VALUES: v.InferInput<typeof TransactionFieldValuesSchema> = {
   status: 'pending',
@@ -79,6 +80,8 @@ export function TransactionForm({
   ...props
 }: TransactionFormProps) {
   const fields = useMemo(() => ({ ...DEFAULT_FIELDS, ..._fields }), [_fields]);
+
+  const router = useRouter();
 
   const [messages, setMessages] = useState<{ msg: string; type?: 'positive' | 'negative' }[]>([]);
   const [isSaving, startSaving] = useTransition();
@@ -134,14 +137,19 @@ export function TransactionForm({
     });
   };
 
+  useEffect(() => {
+    const { unsubscribe } = watch((values) => {
+      router.replace(`?${new URLSearchParams({ values: JSON.stringify(values) })}`);
+    });
+
+    return unsubscribe;
+  }, [watch, router]);
+
   return (
     <div className="flex flex-col gap-4 p-4">
       <FormProvider {...formMethods}>
         {/* <pre className="whitespace-pre">
           {JSON.stringify(watch(), null, 2)}
-        </pre>
-        <pre className="whitespace-pre">
-          {JSON.stringify(values, null, 2)}
         </pre> */}
 
         <form
@@ -460,9 +468,12 @@ function ProductSelector({ tag, term, stocking }: ProductSelectorProps) {
           const initQty = defaultValues?.items?.[itemIdx]?.qty ?? 0;
           const qty: number | undefined = addedItems[itemIdx]?.qty;
 
+          // TODO: Determine the initial stock to calculate the final stock. It mainly for persisted values from queryParams.
           const finalStock = product.stock - ((stocking === true ? -(qty ?? 0) : (qty ?? 0)) - initQty);
           const isOutOfStock = finalStock < 1;
           const subtotal = product.variants[PRODUCT_VARIANT_NO_VARIANTS.name].price * (qty ?? 0);
+
+          // if (itemIdx >= 0) console.log({ itemIdx, initQty, qty, finalStock, isOutOfStock, subtotal, id: product.id, stock: product.stock });
 
           const setQty = (n: number) => {
             if (itemIdx !== -1) {

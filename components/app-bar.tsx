@@ -15,7 +15,7 @@ export function AppBar({ children, showMenu = true, className, ...props }: AppBa
   const appDrawer = useContext(AppDrawerContext);
 
   return (
-    <header className={cn('sticky top-0 z-20 bg-white shadow', className)} {...props}>
+    <header className={cn('sticky top-0 z-20 max-w-full bg-white shadow', className)} {...props}>
       <div className="flex items-center justify-between h-16 px-2 lg:px-4 gap-4">
         {showMenu && (
           <div className="lg:hidden">
@@ -33,5 +33,13 @@ export function AppBar({ children, showMenu = true, className, ...props }: AppBa
         {children}
       </div>
     </header>
+  );
+}
+
+export function AppBarTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <h1 className="text-xl font-bold line-clamp-1">
+      {children}
+    </h1>
   );
 }

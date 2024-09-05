@@ -3,7 +3,9 @@ import { AppBar } from '@/components/app-bar';
 import { TransactionFieldValuesSchema, TransactionForm, type TransactionFormAction } from '@/components/transaction-form';
 import { Button } from '@/components/ui/button';
 import { diff } from 'just-diff';
+import { PrinterIcon } from 'lucide-react';
 import { revalidatePath } from 'next/cache';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import * as v from 'valibot';
 
@@ -69,11 +71,19 @@ export default async function TransactionViewPage({ params }: PageProps) {
           </h1>
         </div>
 
-        {fieldValues.status !== 'completed' && (
-          <Button type="submit" form={`transaction/${transactionId}`}>
-            Simpan
+        <div className="flex gap-2">
+          <Button asChild variant="outline" size="icon">
+            <Link href={`/transaction/${transactionId}/print`}>
+              <PrinterIcon className="size-6" />
+            </Link>
           </Button>
-        )}
+
+          {fieldValues.status !== 'completed' && (
+            <Button type="submit" form={`transaction/${transactionId}`}>
+              Simpan
+            </Button>
+          )}
+        </div>
       </AppBar>
 
       <main className="container relative flex flex-col p-0">

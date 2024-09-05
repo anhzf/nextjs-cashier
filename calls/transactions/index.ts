@@ -91,6 +91,7 @@ export const getTransaction = async (id: number) => {
               id: true,
               name: true,
               variants: true,
+              unit: true,
             },
           },
         },

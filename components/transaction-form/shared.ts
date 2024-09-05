@@ -1,5 +1,5 @@
 import { TRANSACTION_STATUSES } from '@/constants';
-import { DateQuerySchema } from '@/utils/validation';
+import { DateQuerySchemaOptional } from '@/utils/validation';
 import * as v from 'valibot';
 
 export const TransactionFieldValuesSchema = v.object({
@@ -13,6 +13,6 @@ export const TransactionFieldValuesSchema = v.object({
     })),
     v.minLength(1),
   ),
-  dueDate: v.optional(DateQuerySchema),
+  dueDate: v.optional(DateQuerySchemaOptional),
   paid: v.optional(v.number(), 0),
 });

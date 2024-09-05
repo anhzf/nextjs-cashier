@@ -30,7 +30,7 @@ const action: TransactionFormAction = async (values) => {
     paid: v.optional(v.number()),
   }, 'Invalid payload');
 
-  await createTransaction(v.parse(PayloadSchema, {
+  const id = await createTransaction(v.parse(PayloadSchema, {
     userId: Number(session.user.id),
     customerId: values.customerId,
     status: values.status as any,
@@ -44,7 +44,7 @@ const action: TransactionFormAction = async (values) => {
   } satisfies v.InferInput<typeof PayloadSchema>));
 
   revalidatePath('/');
-  return redirect('/');
+  return redirect('/transaction');
 };
 
 export default async function TransactionNewPage() {

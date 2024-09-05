@@ -195,7 +195,7 @@ const _updateItemsInTransaction = async ({ id, items, isStocking = false }: Upda
     .map((item) => ({
       ...item,
       price: item.price ?? findPrice(item.productId, item.variant),
-      transactionId: id
+      transactionId: id,
     }));
 
   // Pick items that exists in transactionItems
@@ -208,33 +208,32 @@ const _updateItemsInTransaction = async ({ id, items, isStocking = false }: Upda
       transactionId: id,
     }));
 
-  // console.log({ insertedItems, updatedItems });
+  // Insert new items to transaction
+  if (insertedItems.length) {
+    await _.insert(transactionItems).values(insertedItems)
+  }
 
-  const queries = [
-    // Insert new items to transaction
-    insertedItems.length
-      ? _.insert(transactionItems).values(insertedItems)
-      : undefined,
+  // Update existing items in transaction
 
-    // Update existing items in transaction
-    ...updatedItems.map(({ transactionId, productId, id, ...item }) => _
-      .update(transactionItems).set({
-        ...item,
-        updatedAt: new Date(),
-      })
-      .where(eq(transactionItems.id, id))
-    ),
+  for (const { transactionId, productId, id, ...item } of updatedItems) {
+    await _.update(transactionItems).set({
+      ...item,
+      updatedAt: new Date(),
+    })
+      .where(eq(transactionItems.id, id));
+  }
 
-    // Update stock
+  // Update stock
+  const stockUpdates = [
     ...insertedItems.map((item) => {
       const { name, stock } = priceReferences.find((product) => product.id === item.productId)!;
       const stockDelta = isStocking ? (item.qty ?? 1) : -(item.qty ?? 1);
       const finalStock = stock + stockDelta;
-      console.log({ name, isStocking, stock, stockDelta, finalStock });
+      if (process.env.NODE_ENV === 'development') console.log({ name, isStocking, stock, stockDelta, finalStock });
       if (finalStock < 0) throw new Error(`Insufficient stock for product ${name} [${item.productId}]`);
 
       return _.update(products)
-        .set({ stock: stockDelta })
+        .set({ stock: finalStock })
         .where(eq(products.id, item.productId));
     }),
     ...updatedItems.map((item) => {
@@ -243,7 +242,7 @@ const _updateItemsInTransaction = async ({ id, items, isStocking = false }: Upda
       const qtyDiff = (item.qty ?? 1) - before.qty;
       const stockDelta = isStocking ? qtyDiff : -qtyDiff;
       const finalStock = stock + stockDelta;
-      console.log({ name, isStocking, before: before.qty, setTo: item.qty ?? 1, stock, stockDelta, finalStock });
+      if (process.env.NODE_ENV === 'development') console.log({ name, isStocking, before: before.qty, setTo: item.qty ?? 1, stock, stockDelta, finalStock });
       if (finalStock < 0) throw new Error(`Insufficient stock for product ${name} [${item.productId}]`);
 
       return _.update(products)
@@ -252,7 +251,9 @@ const _updateItemsInTransaction = async ({ id, items, isStocking = false }: Upda
     }),
   ];
 
-  await Promise.all(queries);
+  for (const update of stockUpdates) {
+    await update;
+  }
 };
 
 // TODO: Able to create transaction with status completed

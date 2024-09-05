@@ -9,3 +9,9 @@ export const DateQuerySchema = v.pipe(
   v.check(v => String(new Date(v)) !== 'Invalid Date', 'Should be a valid date'),
   v.transform((v) => new Date(v)),
 );
+
+export const DateQuerySchemaOptional = v.pipe(
+  v.string(),
+  v.check((v) => v ? String(new Date(v)) !== 'Invalid Date' : true, 'Should be a valid date'),
+  v.transform((v) => v ? new Date(v) : undefined),
+);

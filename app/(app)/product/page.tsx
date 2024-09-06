@@ -20,7 +20,12 @@ const SearchParamsSchema = v.objectWithRest({
   showHidden: v.optional(BooleanQuerySchema),
   sortBy: v.optional(v.picklist(LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY)),
   sort: v.optional(v.picklist(['asc', 'desc'])),
-  tag: v.optional(NumberQuerySchema),
+  tag: v.optional(
+    v.union([
+      v.pipe(v.literal('$all'), v.transform(() => undefined)),
+      NumberQuerySchema,
+    ]),
+  ),
 }, v.string(), 'Invalid query');
 
 interface PageProps {
@@ -33,7 +38,7 @@ export default async function ProductPage({ searchParams }: PageProps) {
     products,
     availableTags,
   ] = await Promise.all([
-    listProduct(query),
+    listProduct({ ...query, stock: false }),
     listTag(),
   ]);
 
@@ -65,10 +70,10 @@ export default async function ProductPage({ searchParams }: PageProps) {
 
       <main className="container relative flex flex-col gap-2 px-2 py-4">
         <div className="flex justify-between items-center gap-4 flex-wrap">
-          <Tabs defaultValue={query.tag?.toString() || 'all'}>
+          <Tabs defaultValue={query.tag?.toString() || '$all'}>
             <TabsList>
-              <TabsTrigger asChild value="all">
-                <Link href={{ query: { ...query, tag: undefined } }}>
+              <TabsTrigger asChild value="$all">
+                <Link href={{ query: { ...query, tag: '$all' } }}>
                   Semua
                 </Link>
               </TabsTrigger>
@@ -114,10 +119,10 @@ export default async function ProductPage({ searchParams }: PageProps) {
                 <TableRow key={product.id}>
                   <TableCell className="">
                     <div className={`font-medium flex items-center gap-2 ${product.isHidden ? "text-muted-foreground" : ""}`}>
-                      {product.name}
                       {product.isHidden && (
                         <EyeOffIcon className="h-4 w-4" aria-label="Hidden product" />
                       )}
+                      {product.name}
                     </div>
 
                     <div className="flex flex-wrap gap-2 mt-2">

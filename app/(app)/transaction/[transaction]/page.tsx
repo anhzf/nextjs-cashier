@@ -90,8 +90,6 @@ export default async function TransactionViewPage({ params }: PageProps) {
         <TransactionForm
           formId={`transaction/${transactionId}`}
           fields={{
-            customer: (fieldValues.customerId !== undefined) && 'readonly',
-            status: fieldValues.status === 'completed' && 'readonly',
             items: fieldValues.status === 'completed' && 'readonly',
           }}
           values={fieldValues}

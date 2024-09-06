@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DatePickerWithRange } from '@/components/ui/date-range-picker';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { PRODUCT_STOCK_ALERT_THRESHOLD } from '@/constants';
@@ -14,7 +15,7 @@ import { products, transactionItems, transactions } from '@/db/schema';
 import { priceFormatter } from '@/utils/format';
 import { endOfWeek, startOfWeek } from 'date-fns';
 import { count, eq, inArray, lte, sql } from 'drizzle-orm';
-import { AlertTriangleIcon, ArrowUpRight, DollarSign } from 'lucide-react';
+import { AlertTriangleIcon, ArrowUpRight, DollarSign, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { cache, Suspense } from 'react';
 
@@ -78,16 +79,30 @@ export default async function HomePage() {
             <DebtCard range={summaryDateRange} />
           </Suspense>
 
-          <Card className="hidden md:flex opacity-40 min-h-24 flex-col justify-center">
-            <div className="text-3xl font-bold text-center">
-              COMING SOON
-            </div>
+          <Card className="order-first md:order-[unset] flex min-h-24 flex-col shadow">
+            <Link href="/transaction/new" className="grow flex py-2 hover:bg-accent active:bg-accent/75 hover:text-accent-foreground flex-col justify-center items-center gap-1">
+              <PlusIcon className="size-6 stroke-[2.5]" />
+              <div className="text-xl font-bold text-center">
+                Transaksi
+              </div>
+            </Link>
+            <Separator />
+            <Link href="/transaction" className="hover:bg-accent active:bg-accent/75 py-2 text-sm hover:text-accent-foreground font-medium text-center">
+              Lihat semua transaksi
+            </Link>
           </Card>
 
-          <Card className="hidden md:flex opacity-40 min-h-24 flex-col justify-center">
-            <div className="text-3xl font-bold text-center">
-              COMING SOON
-            </div>
+          <Card className="order-first md:order-[unset] flex min-h-24 flex-col shadow">
+            <Link href="/stock/new" className="grow flex py-2 hover:bg-accent active:bg-accent/75 hover:text-accent-foreground flex-col justify-center items-center gap-1">
+              <PlusIcon className="size-6 stroke-[2.5]" />
+              <div className="text-xl font-bold text-center">
+                Stok
+              </div>
+            </Link>
+            <Separator />
+            <Link href="/product" className="hover:bg-accent active:bg-accent/75 py-2 text-sm hover:text-accent-foreground font-medium text-center">
+              Lihat semua produk
+            </Link>
           </Card>
         </div>
 

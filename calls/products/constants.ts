@@ -15,6 +15,9 @@ export interface ListProductQuery {
   sortBy?: keyof typeof ProductSortByMap;
   sort?: 'asc' | 'desc';
   tag?: number;
+  // False means show all products
+  // Number means only show products with stock <= number
+  stock?: boolean | number;
 }
 
 export const DEFAULT_LIST_PRODUCTS_QUERY = {
@@ -23,6 +26,7 @@ export const DEFAULT_LIST_PRODUCTS_QUERY = {
   showHidden: false,
   sortBy: 'name',
   sort: 'asc',
+  stock: true,
 } satisfies ListProductQuery;
 
 export const LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY = Object.keys(ProductSortByMap) as (keyof typeof ProductSortByMap)[];

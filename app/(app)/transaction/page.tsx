@@ -90,9 +90,6 @@ async function TransactionList({ from, to, ...query }: TransactionListProps) {
 
   toExport.splice(0, toExport.length, ...data);
 
-  console.log(toExport);
-
-
   return (
     <div className="">
       <Table>

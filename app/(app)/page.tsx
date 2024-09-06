@@ -381,6 +381,7 @@ async function StockAlertCard() {
     listProduct({
       sortBy: 'stock',
       limit: 5,
+      stock: PRODUCT_STOCK_ALERT_THRESHOLD,
     }),
     // TODO: Move this to a separate function
     db.select({ count: count() })
@@ -417,7 +418,7 @@ async function StockAlertCard() {
         </Table>
 
         <Button asChild variant="link" size="sm">
-          <Link href={{ pathname: 'product', query: { orderBy: 'stock' } }} className="text-sm text-muted-foreground">
+          <Link href={{ pathname: 'product', query: { sortBy: 'stock' } }} className="text-sm text-muted-foreground">
             Lihat {alertCount - items.length} barang lainnya
           </Link>
         </Button>

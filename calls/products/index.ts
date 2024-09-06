@@ -3,15 +3,13 @@
 import { db } from '@/db';
 import { products, productTags, tags } from '@/db/schema';
 import { pick } from '@/utils/object';
-import { and, asc, desc, eq, exists, inArray, sql } from 'drizzle-orm';
+import defu from 'defu';
+import { and, asc, desc, eq, exists, gt, inArray, lte, sql } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
 import { ALLOWED_PRODUCT_INSERT_FIELDS, ALLOWED_PRODUCT_UPDATE_FIELDS, DEFAULT_LIST_PRODUCTS_QUERY, ProductSortByMap, type ListProductQuery } from './constants';
 
-type Product = typeof products.$inferSelect;
-
 export async function listProduct(query?: ListProductQuery) {
-  const mergedQuery = { ...DEFAULT_LIST_PRODUCTS_QUERY, ...query };
-  const { limit, start, showHidden, sortBy, sort, tag } = mergedQuery;
+  const { limit, start, showHidden, sortBy, sort, tag, stock } = defu(query, DEFAULT_LIST_PRODUCTS_QUERY);
 
   const results = await db.query.products.findMany({
     where: (table) => and(
@@ -26,6 +24,9 @@ export async function listProduct(query?: ListProductQuery) {
             ),
           ),
       ) : undefined,
+      stock === true
+        ? gt(products.stock, 0)
+        : stock === false ? undefined : lte(products.stock, stock),
     ),
     orderBy: sort === 'desc' ? desc(ProductSortByMap[sortBy]) : asc(ProductSortByMap[sortBy]),
     limit,

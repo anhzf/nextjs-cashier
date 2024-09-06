@@ -22,9 +22,10 @@ export async function getSummaryOfTransactionsTotalAndCount({
       eq(transactions.id, transactionItems.transactionId)
     )
     .where(and(
+      eq(transactions.isStocking, false),
       status && eq(transactions.status, status),
       start && gte(transactions.createdAt, start),
-      end && lte(transactions.createdAt, end)
+      end && lte(transactions.createdAt, end),
     ));
 
   return result;

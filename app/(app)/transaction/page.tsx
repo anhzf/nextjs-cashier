@@ -16,8 +16,6 @@ interface PageProps {
   searchParams: Record<string, string | string[]>;
 }
 
-const toExport: any[] = [];
-
 export default async function TransactionListPage({ searchParams }: PageProps) {
   const query = v.parse(v.objectWithRest(QuerySchema.entries, v.string()), searchParams);
 
@@ -31,7 +29,7 @@ export default async function TransactionListPage({ searchParams }: PageProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <ExportCsvButton data={toExport}>
+          <ExportCsvButton query={query}>
             <FileSpreadsheetIcon className="size-6" />
           </ExportCsvButton>
 
@@ -87,8 +85,6 @@ async function TransactionList({ from, to, ...query }: TransactionListProps) {
     range: [from, to],
     includes: ['customer'],
   });
-
-  toExport.splice(0, toExport.length, ...data);
 
   return (
     <div className="">

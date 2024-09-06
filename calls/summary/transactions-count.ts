@@ -15,7 +15,7 @@ export async function getSummaryOfTransactionsTotalAndCount({
   const [result] = await db.select({
     total: sql<number> `COALESCE(SUM(${transactionItems.price} * ${transactionItems.qty}), 0)`.mapWith(Number),
     items: sql<number> `COALESCE(SUM(${transactionItems.qty}), 0)`.mapWith(Number),
-    count: sql<number> `COUNT(${transactionItems.qty})`.mapWith(Number),
+    count: sql<number> `COUNT(DISTINCT ${transactions.id})`.mapWith(Number),
   }).from(transactions)
     .leftJoin(
       transactionItems,

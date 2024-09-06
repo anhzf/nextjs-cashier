@@ -1,3 +1,4 @@
+import { DashboardSummaryDateRangePicker } from '@/app/(app)/clients';
 import { listProduct } from '@/calls/products';
 import { getSummaryOfTransactionsTotalAndCount as _getSummaryOfTransactionsTotalAndCount } from '@/calls/summary/transactions-count';
 import { listTransaction } from '@/calls/transactions';
@@ -5,7 +6,6 @@ import { AppBar } from '@/components/app-bar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { DatePickerWithRange } from '@/components/ui/date-range-picker';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -23,10 +23,10 @@ const getSummaryOfTransactionsTotalAndCount = cache(_getSummaryOfTransactionsTot
 
 const now = new Date();
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: { searchParams: Record<string, string> }) {
   const summaryDateRange: [Date, Date] = [
-    startOfWeek(now),
-    endOfWeek(now),
+    searchParams.from ? new Date(searchParams.from) : startOfWeek(now),
+    searchParams.to ? new Date(searchParams.to) : endOfWeek(now),
   ];
 
   return (
@@ -40,7 +40,7 @@ export default async function HomePage() {
           </h1>
 
           <div className="flex gap-2">
-            <DatePickerWithRange value={summaryDateRange} />
+            <DashboardSummaryDateRangePicker value={summaryDateRange} />
           </div>
         </div>
 

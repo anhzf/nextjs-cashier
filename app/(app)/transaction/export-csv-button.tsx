@@ -12,13 +12,18 @@ interface ExportCsvButtonProps extends React.ComponentProps<typeof Button> {
   query?: InferOutput<typeof QuerySchema>;
 }
 
+// TODO: Flatten expanded data
 export function ExportCsvButton({ query, className, onClick: _onClick, ...props }: ExportCsvButtonProps) {
   const [isLoading, startLoading] = useTransition();
   const onClick: React.MouseEventHandler<HTMLButtonElement> = (ev) => {
     startLoading(async () => {
       _onClick?.(ev);
 
-      const data = await transactionApi.list(query);
+      const data = await transactionApi.list({
+        ...query,
+        includes: ['customer', 'items'],
+      });
+
       const csv = stringify(data, { header: true, delimiter: ';' });
 
       const blob = new Blob([csv], { type: 'text/csv' });

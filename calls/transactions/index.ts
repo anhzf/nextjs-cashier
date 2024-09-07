@@ -21,7 +21,7 @@ export interface ListTransactionQuery {
   sortBy?: keyof typeof sortByMap;
   sort?: 'asc' | 'desc';
   status?: typeof transactionStatusEnum.enumValues[number];
-  includes?: ('customer')[];
+  includes?: ('customer' | 'items')[];
   range?: [Date?, Date?];
 }
 
@@ -51,6 +51,7 @@ export const listTransaction = async (query?: ListTransactionQuery) => {
     offset: start,
     with: {
       customer: includes?.includes('customer') || undefined,
+      items: includes?.includes('items') || undefined,
     },
   });
 

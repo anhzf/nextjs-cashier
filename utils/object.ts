@@ -17,3 +17,13 @@ export const pick = <T extends Record<string, any>, K extends keyof T>(obj: T, .
 
   return result;
 };
+
+export const entriesToObject = (entries: [string, unknown][]): Record<string, string | string[]> => entries
+  .reduce((obj, [key, value]) => {
+    if (key in obj) {
+      obj[key] = Array.isArray(obj[key]) ? [...obj[key], value] : [obj[key], value];
+    } else {
+      obj[key] = value;
+    }
+    return obj;
+  }, {} as any);

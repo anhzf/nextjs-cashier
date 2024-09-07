@@ -2,21 +2,29 @@ import { auth } from '@/auth';
 import { LIST_TRANSACTION_QUERY_SUPPORTED_SORT_BY, createTransaction, listTransaction } from '@/calls/transactions';
 import { defineApi } from '@/utils/api';
 import { notAuthorized } from '@/utils/errors';
+import { searchParamsToObject } from '@/utils/url';
 import { NumberQuerySchema } from '@/utils/validation';
 import { NextResponse } from 'next/server';
 import * as v from 'valibot';
 
 export const GET = defineApi(async (req) => {
+  const IncludesSchema = v.picklist(['customer', 'items']);
   const QuerySchema = v.object({
     limit: v.optional(NumberQuerySchema),
     start: v.optional(NumberQuerySchema),
     sortBy: v.optional(v.picklist(LIST_TRANSACTION_QUERY_SUPPORTED_SORT_BY)),
     sort: v.optional(v.picklist(['asc', 'desc'])),
+    includes: v.optional(v.pipe(
+      v.union([
+        IncludesSchema,
+        v.pipe(v.string(), v.transform((value) => v.parse(v.array(IncludesSchema), value.split(',')))),
+        v.array(IncludesSchema),
+      ]),
+      v.transform((value) => (Array.isArray(value) ? value : [value])),
+    )),
   }, 'Invalid query');
 
-  const query = v.parse(
-    QuerySchema, Object.fromEntries(new URL(req.url).searchParams.entries()),
-  );
+  const query = v.parse(QuerySchema, searchParamsToObject(new URL(req.url).searchParams));
 
   const transactions = await listTransaction(query);
 

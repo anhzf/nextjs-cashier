@@ -30,3 +30,5 @@ export const createUser = async (name: string, email: string, password: string) 
 
   return result.id;
 };
+
+export const listUser = async () => db.query.users.findMany();

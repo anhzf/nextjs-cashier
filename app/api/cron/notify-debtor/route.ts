@@ -1,13 +1,14 @@
 import { listTransaction } from '@/calls/transactions';
+import { listUser } from '@/calls/user';
 import { defineApi } from '@/utils/api';
 import { notAuthorized } from '@/utils/errors';
 import { NextResponse } from 'next/server';
 import { createTransport } from 'nodemailer';
 
 export const GET = defineApi(async (req) => {
-  const recipient = process.env.NOTIFY_RECIPIENT;
-  if (!recipient) return NextResponse.json({ data: 'Recipient not set' });
   if (req.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) return notAuthorized();
+
+  const recipients = await listUser();
 
   const transporter = createTransport({
     host: 'smtp.gmail.com',
@@ -37,7 +38,7 @@ ${transaction.map((transaction) => `<div>
 
   const { messageId } = await transporter.sendMail({
     from: '"Cashier App" <anh.dev7@gmail.com>',
-    to: recipient,
+    to: recipients.map((user) => user.email),
     subject: 'Pengingat Pembayaran',
     html,
   });

@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/utils/ui';
-import { LayoutDashboardIcon, LogOutIcon, PackageIcon, ShoppingCartIcon } from 'lucide-react';
+import { LayoutDashboardIcon, LogOutIcon, PackageIcon, ShoppingCartIcon, UsersIcon } from 'lucide-react';
 import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -14,6 +14,7 @@ const MENU = [
   { href: '/', label: 'Dasbor', icon: LayoutDashboardIcon },
   { href: '/transaction', label: 'Transaksi', icon: ShoppingCartIcon },
   { href: '/product', label: 'Produk', icon: PackageIcon },
+  { href: '/customer', label: 'Kustomer', icon: UsersIcon },
 ];
 
 interface AppDrawerContext {

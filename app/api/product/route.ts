@@ -15,6 +15,7 @@ export const GET = defineApi(async (req) => {
     sortBy: v.optional(v.picklist(LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY)),
     sort: v.optional(v.picklist(['asc', 'desc'])),
     tag: v.optional(NumberQuerySchema),
+    stock: v.optional(v.union([BooleanQuerySchema, NumberQuerySchema])),
   }, 'Invalid query');
 
   const query = v.parse(

@@ -445,7 +445,7 @@ function ProductSelector({ tag, term, stocking }: ProductSelectorProps) {
 
   const addedItems = watch('items');
 
-  const { data: items, isFetching: isLoading } = useQuery(createProductsQuery(tag ? { tag } : {}));
+  const { data: items, isFetching: isLoading } = useQuery(createProductsQuery(tag ? { tag, stock: 'false' } : { stock: 'false' }));
   const _filterAndSorted = useMemo(() => (items ?? [])
     .filter((product) => term ? product.name.toLowerCase().includes(term.toLowerCase() ?? '') : true)
     // Any items that already added and have qty > 0 should be on top

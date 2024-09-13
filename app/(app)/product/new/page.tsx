@@ -27,6 +27,7 @@ const action: ProductFormAction = async (payload) => {
   });
 
   revalidatePath('/product');
+  revalidatePath('/stock');
   redirect('/product');
 };
 

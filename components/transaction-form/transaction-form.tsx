@@ -307,7 +307,7 @@ function CustomerSelector({
   onSelect,
 }: CustomerSelectorProps) {
   const [customerName, setCustomerName] = useState('');
-  const { data: customers } = useQuery(createCustomersQuery());
+  const { data: customers, refetch } = useQuery(createCustomersQuery());
 
   return (
     <Dialog>
@@ -368,6 +368,10 @@ function CustomerSelector({
                   </Button>
                 </DialogClose>
               )}
+              onSuccess={(id) => {
+                onSelect?.({ id });
+                refetch();
+              }}
             />
           </TabsContent>
         </Tabs>

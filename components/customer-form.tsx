@@ -1,3 +1,5 @@
+'use client';
+
 import { createCustomer } from '@/calls/customers';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +14,7 @@ interface FieldValues {
 interface CustomerFormProps {
   values?: FieldValues;
   append?: (state: FormState<FieldValues>) => React.ReactNode;
+  onSuccess?: (id: number) => void;
 }
 
 export function CustomerForm({
@@ -20,13 +23,15 @@ export function CustomerForm({
     <Button type="submit" disabled={!state.isValid || state.isSubmitting} className="w-full">
       <span>Simpan</span>
     </Button>
-  )
+  ),
+  onSuccess,
 }: CustomerFormProps) {
   const { register, formState, handleSubmit, setError } = useForm<FieldValues>({ values });
 
   const onSubmit: SubmitHandler<FieldValues> = async (data) => {
     try {
-      await createCustomer(data);
+      const id = await createCustomer(data);
+      onSuccess?.(id);
     } catch (err) {
       setError('root', { message: String(err) });
     }

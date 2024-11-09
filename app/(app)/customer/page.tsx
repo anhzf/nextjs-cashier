@@ -9,7 +9,7 @@ import { Suspense } from 'react';
 
 export default function CustomerListPage() {
   return (
-    <div className="relative h-screen flex flex-col">
+    <div className="relative h-screen flex flex-col overflow-auto">
       <AppBar>
         <div className="grow flex justify-between items-center gap-4">
           <h1 className="text-xl font-bold">
@@ -28,7 +28,8 @@ export default function CustomerListPage() {
 }
 
 async function CustomerTable() {
-  const customers = await listCustomer();
+  // TODO: Implement pagination
+  const customers = await listCustomer({ limit: Infinity });
 
   return (
     <Table>
@@ -50,9 +51,15 @@ async function CustomerTable() {
       <TableBody>
         {customers.map((customer, index) => (
           <TableRow key={customer.id}>
-            <TableCell>{index + 1}</TableCell>
-            <TableCell>{customer.name}</TableCell>
-            <TableCell>{customer.phone || '-'}</TableCell>
+            <TableCell className="w-[4ch] text-muted-foreground">
+              {index + 1}
+            </TableCell>
+            <TableCell>
+              {customer.name}
+            </TableCell>
+            <TableCell>
+              {customer.phone || '-'}
+            </TableCell>
             <TableCell className="text-right">
               <CustomerDialog
                 data={customer}

@@ -63,7 +63,7 @@ export default async function TransactionViewPage({ params }: PageProps) {
   };
 
   return (
-    <div className="relative h-screen flex flex-col">
+    <div className="relative h-screen flex flex-col overflow-auto">
       <AppBar>
         <div className="grow flex justify-between items-center gap-4">
           <h1 className="text-xl font-bold">

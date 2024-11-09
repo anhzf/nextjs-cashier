@@ -15,7 +15,7 @@ export async function listCustomer(query?: ListCustomerQuery): Promise<Customer[
 
   const results = await db.query.customers.findMany({
     orderBy: sort === 'desc' ? desc(sortByMap[sortBy]) : asc(sortByMap[sortBy]),
-    limit,
+    limit: limit === Infinity ? undefined : limit,
     offset: start,
   });
 

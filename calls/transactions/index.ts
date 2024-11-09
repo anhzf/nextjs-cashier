@@ -25,7 +25,7 @@ export interface ListTransactionQuery {
   range?: [Date?, Date?];
 }
 
-const DEFAULT_LIST_TRANSACTIONS_QUERY = {
+export const DEFAULT_LIST_TRANSACTIONS_QUERY = {
   limit: 10,
   start: 0,
   sortBy: 'createdAt',
@@ -47,7 +47,7 @@ export const listTransaction = async (query?: ListTransactionQuery) => {
       range?.[1] && lte(transactions.createdAt, range[1]),
     ),
     orderBy: sort === 'desc' ? desc(sortByMap[sortBy]) : asc(sortByMap[sortBy]),
-    limit,
+    limit: limit === Infinity ? undefined : limit,
     offset: start,
     with: {
       customer: includes?.includes('customer') || undefined,

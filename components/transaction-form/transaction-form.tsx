@@ -449,9 +449,15 @@ function ProductSelector({ tag, term, stocking }: ProductSelectorProps) {
 
   const addedItems = watch('items');
 
-  const { data: items, isFetching: isLoading } = useQuery(createProductsQuery(tag ? { tag, stock: 'false' } : { stock: 'false' }));
+  const { data: items, isFetching: isLoading } = useQuery(createProductsQuery({ stock: 'false' }));
   const _filterAndSorted = useMemo(() => (items ?? [])
-    .filter((product) => term ? product.name.toLowerCase().includes(term.toLowerCase() ?? '') : true)
+    .filter((product) => {
+      const matchTag = tag ? product.tags.some((t) => t.tag.id === Number(tag)) : true;
+
+      return matchTag && (term
+        ? product.name.toLowerCase().includes(term.toLowerCase() ?? '')
+        : true);
+    })
     // Any items that already added and have qty > 0 should be on top
     .sort((a, b) => {
       const aIdx = addedItems.findIndex((item) => item.productId === String(a.id));
@@ -459,8 +465,8 @@ function ProductSelector({ tag, term, stocking }: ProductSelectorProps) {
       const aQty = addedItems[aIdx]?.qty ?? 0;
       const bQty = addedItems[bIdx]?.qty ?? 0;
       return bQty - aQty;
-    }), [items, term, addedItems]);
-  const filterAndSorted = useDebounce(_filterAndSorted, 1000);
+    }), [items, tag, term, addedItems]);
+  const filterAndSorted = useDebounce(_filterAndSorted, 400);
 
   return (
     <div ref={root} className="flex-1 relative flex max-h-[70vh] flex-col gap-2 overflow-y-auto">

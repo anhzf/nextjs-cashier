@@ -12,7 +12,10 @@ import { BooleanQuerySchema, NumberQuerySchema } from '@/utils/validation';
 import { EyeOffIcon, PencilIcon, PlusIcon, TriangleAlertIcon } from 'lucide-react';
 import Link from 'next/link';
 import * as v from 'valibot';
-import { ProductListSwitchHidden } from './clients';
+import { FilterBar } from './clients';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { LIST_TRANSACTION_QUERY_SUPPORTED_SORT_BY } from '@/calls/transactions';
+import { Label } from '@/components/ui/label';
 
 const SearchParamsSchema = v.objectWithRest({
   limit: v.optional(NumberQuerySchema),
@@ -38,12 +41,13 @@ export default async function ProductPage({ searchParams }: PageProps) {
     products,
     availableTags,
   ] = await Promise.all([
-    listProduct({ ...query, stock: false }),
+    // TODO: Implement pagination
+    listProduct({ ...query, stock: false, limit: Infinity }),
     listTag(),
   ]);
 
   return (
-    <div className="relative h-screen max-w-[100vw] flex flex-col">
+    <div className="relative h-screen max-w-[100vw] flex flex-col overflow-auto">
       <AppBar>
         <div className="grow flex justify-between items-center gap-4">
           <h1 className="text-xl font-bold">
@@ -68,37 +72,16 @@ export default async function ProductPage({ searchParams }: PageProps) {
         </div>
       </AppBar>
 
-      <main className="container relative flex flex-col gap-2 px-2 py-4">
-        <div className="flex justify-between items-center gap-4 flex-wrap">
-          <Tabs defaultValue={query.tag?.toString() || '$all'}>
-            <TabsList>
-              <TabsTrigger asChild value="$all">
-                <Link href={{ query: { ...query, tag: '$all' } }}>
-                  Semua
-                </Link>
-              </TabsTrigger>
+      <main className="container relative flex px-0 flex-col gap-2">
+        <FilterBar availableTags={availableTags} query={query} />
 
-              {availableTags.map((tag) => (
-                <TabsTrigger
-                  key={tag.id}
-                  asChild
-                  value={String(tag.id)}
-                >
-                  <Link href={{ query: { ...query, tag: tag.id } }}>
-                    {tag.name}
-                  </Link>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-
-          <ProductListSwitchHidden query={query} />
-        </div>
-
-        <div className="w-full overflow-auto">
+        <div className="w-full px-4 py-2 overflow-auto">
           <Table className="min-w-[640px]">
             <TableHeader>
               <TableRow>
+                <TableHead>
+                  #
+                </TableHead>
                 <TableHead className="w-[40%]">
                   Nama
                 </TableHead>
@@ -115,8 +98,11 @@ export default async function ProductPage({ searchParams }: PageProps) {
             </TableHeader>
 
             <TableBody>
-              {products.map((product) => (
+              {products.map((product, i) => (
                 <TableRow key={product.id}>
+                  <TableCell className="w-[4ch] text-muted-foreground">
+                    {i + 1}
+                  </TableCell>
                   <TableCell className="">
                     <div className={`font-medium flex items-center gap-2 ${product.isHidden ? "text-muted-foreground" : ""}`}>
                       {product.isHidden && (
@@ -130,9 +116,11 @@ export default async function ProductPage({ searchParams }: PageProps) {
                         <Badge
                           key={tag.id}
                           variant={product.isHidden ? "outline" : "secondary"}
-                          className={product.isHidden ? "text-muted-foreground" : ""}
+                          className={['hover:bg-gray-300/75 active:bg-gray-300', product.isHidden ? 'text-muted-foreground' : ''].join(' ')}
                         >
-                          {tag.name}
+                          <Link href={{ query: { ...searchParams, tag: tag.id } }}>
+                            {tag.name}
+                          </Link>
                         </Badge>
                       ))}
                     </div>
@@ -167,7 +155,7 @@ export default async function ProductPage({ searchParams }: PageProps) {
             </TableBody>
           </Table>
         </div>
-      </main>
-    </div>
+      </main >
+    </div >
   );
 }

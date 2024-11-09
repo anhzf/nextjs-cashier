@@ -1,6 +1,5 @@
 import { addIconSelectors } from '@iconify/tailwind';
-import type { Config } from "tailwindcss";
-
+import type { Config } from 'tailwindcss';
 
 const config = {
   darkMode: ["class"],
@@ -75,6 +74,31 @@ const config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      boxShadow: {
+        // Left Shadows
+        'l-sm': '-1px 0 2px 0 rgb(0 0 0 / 0.05)', // left small
+        'l': '-1px 1px 3px 0 rgb(0 0 0 / 0.1), -1px 1px 2px -1px rgb(0 0 0 / 0.1)', // left default
+        'l-md': '-4px 4px 6px -1px rgb(0 0 0 / 0.1), -2px 2px 4px -2px rgb(0 0 0 / 0.1)', // left md
+        'l-lg': '-10px 10px 15px -3px rgb(0 0 0 / 0.1), -4px 4px 6px -4px rgb(0 0 0 / 0.1)', // left lg
+        'l-xl': '-20px 20px 25px -5px rgb(0 0 0 / 0.1), -8px 8px 10px -6px rgb(0 0 0 / 0.1)', // left xl
+        'l-2xl': '-25px 25px 50px -12px rgb(0 0 0 / 0.25)', // left 2xl
+
+        // Right Shadows
+        'r-sm': '1px 0 2px 0 rgb(0 0 0 / 0.05)', // right small
+        'r': '1px 1px 3px 0 rgb(0 0 0 / 0.1), 1px 1px 2px -1px rgb(0 0 0 / 0.1)', // right default
+        'r-md': '4px 4px 6px -1px rgb(0 0 0 / 0.1), 2px 2px 4px -2px rgb(0 0 0 / 0.1)', // right md
+        'r-lg': '10px 10px 15px -3px rgb(0 0 0 / 0.1), 4px 4px 6px -4px rgb(0 0 0 / 0.1)', // right lg
+        'r-xl': '20px 20px 25px -5px rgb(0 0 0 / 0.1), 8px 8px 10px -6px rgb(0 0 0 / 0.1)', // right xl
+        'r-2xl': '25px 25px 50px -12px rgb(0 0 0 / 0.25)', // right 2xl
+
+        // Top Shadows
+        't-sm': '0 -1px 2px 0 rgb(0 0 0 / 0.05)', // top small
+        't': '0 -1px 3px 0 rgb(0 0 0 / 0.1), 0 -1px 2px -1px rgb(0 0 0 / 0.1)', // top default
+        't-md': '0 -4px 6px -1px rgb(0 0 0 / 0.1), 0 -2px 4px -2px rgb(0 0 0 / 0.1)', // top md
+        't-lg': '0 -10px 15px -3px rgb(0 0 0 / 0.1), 0 -4px 6px -4px rgb(0 0 0 / 0.1)', // top lg
+        't-xl': '0 -20px 25px -5px rgb(0 0 0 / 0.1), 0 -8px 10px -6px rgb(0 0 0 / 0.1)', // top xl
+        't-2xl': '0 -25px 50px -12px rgb(0 0 0 / 0.25)', // top 2xl
+      }
     },
   },
   plugins: [

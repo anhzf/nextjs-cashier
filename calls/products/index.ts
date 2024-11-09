@@ -29,7 +29,7 @@ export async function listProduct(query?: ListProductQuery) {
         : stock === false ? undefined : lte(products.stock, stock),
     ),
     orderBy: sort === 'desc' ? desc(ProductSortByMap[sortBy]) : asc(ProductSortByMap[sortBy]),
-    limit,
+    limit: limit === Infinity ? undefined : limit,
     offset: start,
     with: {
       tags: {

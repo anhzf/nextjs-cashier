@@ -3,7 +3,8 @@ import { queryOptions, skipToken } from '@tanstack/react-query';
 
 export const createProductsQuery = (filter?: Record<string, string>) => queryOptions({
   queryKey: ['products', filter],
-  queryFn: () => productApi.list(filter),
+  // TODO: Implement infinite scroll
+  queryFn: () => productApi.list({ ...filter, limit: 'Infinity' }),
   placeholderData: [],
   // initialData: [],
 });

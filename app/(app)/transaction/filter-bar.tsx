@@ -12,6 +12,7 @@ import type { InferOutput } from 'valibot';
 import type { QuerySchema } from './shared';
 import { TRANSACTION_STATUSES_UI } from '@/ui';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 const SORT_BY_ATTRS = {
   createdAt: {
@@ -104,9 +105,11 @@ export function FilterBar({ from, to, sortBy = 'createdAt', status }: FilterBarP
         </Select>
       </div>
 
+      {/* <Separator orientation="vertical" /> */}
+
       <div className="flex items-center gap-2">
         <Label className="text-gray-500">
-          Sesudah:
+          Mulai:
         </Label>
 
         <DatePicker
@@ -124,7 +127,7 @@ export function FilterBar({ from, to, sortBy = 'createdAt', status }: FilterBarP
 
       <div className="flex items-center gap-2">
         <Label className="text-gray-500">
-          Sebelum:
+          Sampai:
         </Label>
 
         <DatePicker

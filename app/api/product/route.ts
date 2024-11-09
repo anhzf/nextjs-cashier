@@ -9,7 +9,10 @@ import * as v from 'valibot';
 
 export const GET = defineApi(async (req) => {
   const QuerySchema = v.object({
-    limit: v.optional(NumberQuerySchema),
+    limit: v.optional(v.union([
+      v.pipe(v.literal('Infinity'), v.transform(() => Infinity)),
+      NumberQuerySchema,
+    ])),
     start: v.optional(NumberQuerySchema),
     showHidden: v.optional(BooleanQuerySchema),
     sortBy: v.optional(v.picklist(LIST_PRODUCT_QUERY_SUPPORTED_SORT_BY)),

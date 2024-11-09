@@ -49,7 +49,7 @@ const action: TransactionFormAction = async (values) => {
 
 export default async function TransactionNewPage() {
   return (
-    <div className="relative h-screen flex flex-col">
+    <div className="relative h-screen flex flex-col overflow-auto">
       <AppBar showMenu={false}>
         <div className="grow flex items-center gap-4">
           <Button asChild variant="ghost" size="icon" className="shrink-0">

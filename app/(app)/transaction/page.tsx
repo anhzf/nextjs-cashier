@@ -29,7 +29,7 @@ export default async function TransactionListPage({ searchParams }: PageProps) {
   const summary = await getSummaryOfTransactionsTotalAndCount({
     start: query.from,
     end: query.to,
-    status: query.status,
+    status: query.status === '$all' ? undefined : query.status,
   });
 
   return (
@@ -98,9 +98,10 @@ export default async function TransactionListPage({ searchParams }: PageProps) {
 
 type TransactionListProps = v.InferOutput<typeof QuerySchema>;
 
-async function TransactionList({ from, to, ...query }: TransactionListProps) {
+async function TransactionList({ from, to, status, ...query }: TransactionListProps) {
   const data = await listTransaction({
     ...query,
+    status: status === '$all' ? undefined : status,
     range: [from, to],
     includes: ['customer'],
     limit: Infinity,

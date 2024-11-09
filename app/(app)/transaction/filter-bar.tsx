@@ -37,7 +37,7 @@ export function FilterBar({ from, to, sortBy = 'createdAt', status }: FilterBarP
   if (status) searchParams.append('status', status);
 
   const onStatusChange = (status: string) => {
-    if (status && status !== 'all') searchParams.set('status', status);
+    if (status) searchParams.set('status', status);
     else searchParams.delete('status');
     router.push(`?${searchParams}`);
   };
@@ -74,7 +74,7 @@ export function FilterBar({ from, to, sortBy = 'createdAt', status }: FilterBarP
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Semua</SelectItem>
+            <SelectItem value="$all">Semua</SelectItem>
             {TRANSACTION_STATUSES.map((status) => (
               <SelectItem key={status} value={status}>
                 <Badge className={TRANSACTION_STATUSES_UI[status].classes}>

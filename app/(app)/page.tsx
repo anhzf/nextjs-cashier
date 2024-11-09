@@ -1,5 +1,6 @@
 import { DashboardSummaryDateRangePicker } from '@/app/(app)/clients';
 import { listProduct } from '@/calls/products';
+import { getSummaryOfTransactionPendingDebtAmount } from '@/calls/summary/transaction-pending';
 import { getSummaryOfTransactionsTotalAndCount as _getSummaryOfTransactionsTotalAndCount } from '@/calls/summary/transactions-count';
 import { listTransaction } from '@/calls/transactions';
 import { AppBar } from '@/components/app-bar';
@@ -364,18 +365,7 @@ async function DebtorCard() {
 }
 
 // Use this convention for caching functions, make sure to use the same arguments too.
-const getPaidMinusDebt = cache(async (...transactionIds: number[]) => {
-  const results = await db.select({
-    id: transactions.id,
-    minus: sql<number>`COALESCE(SUM(${transactionItems.qty} * ${transactionItems.price}), 0) - ${transactions.paid}`,
-  })
-    .from(transactions)
-    .leftJoin(transactionItems, eq(transactions.id, transactionItems.transactionId))
-    .where(inArray(transactions.id, transactionIds))
-    .groupBy(transactions.id);
-
-  return results;
-});
+const getPaidMinusDebt = cache(getSummaryOfTransactionPendingDebtAmount);
 
 async function PaidMinusCellContent({ ids, transactionId }: { ids: number[], transactionId: number }) {
   const results = await getPaidMinusDebt(...ids);

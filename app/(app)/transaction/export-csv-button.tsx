@@ -21,6 +21,7 @@ export function ExportCsvButton({ query, className, onClick: _onClick, ...props 
 
       const data = await transactionApi.list({
         ...query,
+        status: query?.status === '$all' ? undefined : query?.status,
         includes: ['customer', 'items'],
       });
 

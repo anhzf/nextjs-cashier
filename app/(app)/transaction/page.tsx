@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TRANSACTION_STATUSES_UI } from '@/ui';
 import defu from 'defu';
-import { Edit2Icon, FileSpreadsheetIcon, PlusIcon } from 'lucide-react';
+import { DownloadIcon, Edit2Icon, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import * as v from 'valibot';
@@ -43,7 +43,7 @@ export default async function TransactionListPage({ searchParams }: PageProps) {
 
         <div className="flex items-center gap-2">
           <ExportCsvButton query={_query}>
-            <FileSpreadsheetIcon className="size-6" />
+            <DownloadIcon className="size-6" />
           </ExportCsvButton>
 
           <Button asChild aria-label="Transaksi Baru">

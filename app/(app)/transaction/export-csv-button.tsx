@@ -3,9 +3,9 @@
 import { transactionApi } from '@/client/calls';
 import { LoadingOverlay } from '@/components/loading-overlay';
 import { Button } from '@/components/ui/button';
-import { stringify } from 'csv-stringify/browser/esm/sync';
 import { useTransition } from 'react';
 import type { InferOutput } from 'valibot';
+import { utils as XLSXUtils, writeFile } from 'xlsx';
 import type { QuerySchema } from './shared';
 
 interface ExportCsvButtonProps extends React.ComponentProps<typeof Button> {
@@ -25,17 +25,12 @@ export function ExportCsvButton({ query, className, onClick: _onClick, ...props 
         includes: ['customer', 'items'],
       });
 
-      const csv = stringify(data, { header: true, delimiter: ';' });
+      const worksheet = XLSXUtils.json_to_sheet(data);
+      const workbook = XLSXUtils.book_new();
 
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
+      XLSXUtils.book_append_sheet(workbook, worksheet, 'Transaksi');
 
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'transaksi.csv';
-      a.click();
-
-      URL.revokeObjectURL(url);
+      writeFile(workbook, 'transaksi.xlsx');
     });
   };
 

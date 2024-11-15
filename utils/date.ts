@@ -1,0 +1,1 @@
+export const toUTC = (date: Date) => new Date(date.getTime() - date.getTimezoneOffset() * 60_000);

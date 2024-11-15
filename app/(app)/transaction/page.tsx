@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TRANSACTION_STATUSES_UI } from '@/ui';
+import { filterByValue } from '@/utils/object';
+import { endOfDay, } from 'date-fns';
 import defu from 'defu';
 import { DownloadIcon, Edit2Icon, PlusIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -25,7 +27,19 @@ interface PageProps {
 
 export default async function TransactionListPage({ searchParams }: PageProps) {
   const _query = v.parse(v.objectWithRest(QuerySchema.entries, v.string()), searchParams);
-  const query: v.InferOutput<typeof QuerySchema> = defu(_query, DEFAULT_LIST_TRANSACTION_QUERY);
+
+  const DYNAMIC_DEFAULT_LIST_TRANSACTION_QUERY = {
+    to: _query.from ? endOfDay(searchParams.from as string/* Prevent locale issues */) : undefined,
+  } satisfies v.InferOutput<typeof QuerySchema>;
+
+  const query = defu(
+    filterByValue(_query, Boolean),
+    DYNAMIC_DEFAULT_LIST_TRANSACTION_QUERY,
+    DEFAULT_LIST_TRANSACTION_QUERY,
+  ) as v.InferOutput<typeof QuerySchema>;
+
+  console.log({ query });
+
   const summary = await getSummaryOfTransactionsTotalAndCount({
     start: query.from,
     end: query.to,
@@ -57,8 +71,8 @@ export default async function TransactionListPage({ searchParams }: PageProps) {
 
       <FilterBar {...query} />
 
-      <main className="container relative flex flex-col gap-4 px-0 pt-4">
-        <div className="px-2">
+      <main className="grow container relative flex flex-col gap-4 px-0 pt-4">
+        <div className="grow px-2">
           <Suspense fallback={(
             <Table>
               <TableHeader>

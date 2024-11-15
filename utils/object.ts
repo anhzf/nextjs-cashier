@@ -27,3 +27,9 @@ export const entriesToObject = (entries: [string, unknown][]): Record<string, st
     }
     return obj;
   }, {} as any);
+
+export const filterByValue = <
+  T, R extends Partial<Record<string, T>> = Partial<Record<string, T>>,
+>(obj: Record<string, T>, predicate: ((value: T) => boolean)): R => Object.fromEntries(
+  Object.entries(obj).filter(([_, v]) => predicate(v))
+) as R;

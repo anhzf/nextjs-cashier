@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TRANSACTION_STATUSES_UI } from '@/ui';
 import { filterByValue } from '@/utils/object';
+import { UTCDate } from '@date-fns/utc';
 import { endOfDay, } from 'date-fns';
 import defu from 'defu';
 import { DownloadIcon, Edit2Icon, PlusIcon } from 'lucide-react';
@@ -25,11 +26,12 @@ interface PageProps {
   searchParams: Record<string, string | string[]>;
 }
 
+/** TODO: Date local timezone should universal */
 export default async function TransactionListPage({ searchParams }: PageProps) {
   const _query = v.parse(v.objectWithRest(QuerySchema.entries, v.string()), searchParams);
 
   const DYNAMIC_DEFAULT_LIST_TRANSACTION_QUERY = {
-    to: _query.from ? endOfDay(searchParams.from as string/* Prevent locale issues */) : undefined,
+    to: _query.from ? endOfDay(new UTCDate(searchParams.from as string)) : undefined,
   } satisfies v.InferOutput<typeof QuerySchema>;
 
   const query = defu(

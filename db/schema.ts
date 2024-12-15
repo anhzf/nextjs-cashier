@@ -9,6 +9,8 @@ export const users = pgTable('users', {
   name: varchar('name').notNull(),
   email: varchar('email').notNull().unique(),
   password: text('password').notNull(),
+  config: jsonb('config').$type<{ notifications: Record<string, boolean> }>()
+    .notNull().default({ notifications: {} }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (users) => ({

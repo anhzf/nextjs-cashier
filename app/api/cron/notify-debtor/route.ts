@@ -1,6 +1,7 @@
 import { getSummaryOfTransactionPendingDebtAmount } from '@/calls/summary/transaction-pending';
 import { listTransaction } from '@/calls/transactions';
 import { listUser } from '@/calls/user';
+import { db } from '@/db';
 import { defineApi } from '@/utils/api';
 import { notAuthorized } from '@/utils/errors';
 import { priceFormatter } from '@/utils/format';
@@ -14,7 +15,9 @@ export const GET = defineApi(async (req) => {
     return notAuthorized();
   }
 
-  const recipients = await listUser();
+  const users = await listUser();
+
+  const recipients = users.filter((user) => user.config.notifications.dailyDebtReminder);
 
   const transporter = createTransport({
     host: 'smtp.gmail.com',
